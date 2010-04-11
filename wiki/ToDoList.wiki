@@ -1,0 +1,13 @@
+#summary ToDo-List
+
+= Features =
+
+  * Keyboard shortcut to call the popup
+  * Separated counters for each word
+  * Separated keyboard navigation for each word
+  * Different colors
+
+= Known Issues =
+  * Cannot highlight pages with frames: http://code.google.com/p/chromium/issues/detail?id=20773.
+  * After a Turn off/on, other tabs are not refreshed. 
+  * Crap-look code
