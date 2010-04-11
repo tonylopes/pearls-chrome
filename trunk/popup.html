@@ -1,0 +1,129 @@
+<html>
+
+<script src="pearlstorage.js" />
+<script src="pearlupdate.js" />
+<script>
+debug = false
+function setPearls(pearltype){
+  chrome.tabs.getSelected(null,function(tab) {
+    setUrl(tab.url)
+    localpearlsInput = document.getElementById(pearltype );
+    localpearlsInput.value = getPearls(pearltype);
+  });
+}
+
+function setToggle(){ 
+  toggleInput = document.getElementById("toggle")
+  toggled = loadToggle();  
+  toggleInput.value = toggled ? "Turn Off" : "Turn On";  
+}
+
+function turnOnOff(){  
+  toggled = loadToggle();     
+  saveToggle(!toggled);  
+  chrome.tabs.getSelected(null,function(tab) {
+    updatePage(tab)
+  })
+  setToggle();
+}
+
+function mystorePearls(pearltype){
+  if(debug) console.log('hey')
+  chrome.tabs.getSelected(null,function(tab) {
+    if(debug) console.log(tab.url)
+    setUrl(tab.url)
+    pearlvalue = document.getElementById(pearltype).value
+    storePearls(pearltype,pearlvalue)
+    updatePage(tab)
+  });
+}
+
+function myMovePage(type){
+  if(debug) console.log('move')
+  chrome.tabs.getSelected(null,function(tab) {
+    movePage('pos',type,tab)
+   });
+}
+
+function main(){
+  if(debug) console.log("Popup loading")
+  setPearls("localpearls");
+  setPearls("globalpearls");
+  setToggle("toggle");
+  if(debug) console.log("Popup loaded")
+  document.getElementById('localpearls').focus = true
+}
+
+
+</script>
+<style>
+body {
+  width:600px;
+  overflow-x:hidden;
+  font-family: verdana; 
+  font-size: 10px;  
+}
+
+input {
+  border: solid 1px #CCC;
+  font-family: verdana; 
+  font-size: 10px;
+}
+
+textarea {
+  border: solid 1px #CCC;
+  font-family: verdana; 
+  font-size: 10px;
+  margin-bottom: 5px;
+}
+
+textarea:hover {
+  background-color: #EEE;  
+}
+
+input:hover, input:focus {
+  background-color: #EEE;  
+}
+
+</style>
+
+<body onload="javascript:main()">
+<form>
+<div id="words">
+  
+</div>
+<div>
+  <span style="width: 120px; vertical-align:middle; height: 50px; float: left">
+    This page pearls: 
+  </span>
+  <span style="width: 480px; height: 50px; float: right">
+    <textarea style="width: 480px; height: 50px;" id="localpearls" type="text" onchange="javascript:mystorePearls('localpearls')" ></textarea>
+  </span>
+  <span style="width: 600px; height: 5px; float: right">
+  </span>
+  <span style="width: 120px; vertical-align:middle; height: 50px; float: left">
+    Every page pearls: 
+  </span>
+  <span style="width: 480px; height: 50px; float: right">
+    <textarea style="width: 480px; height: 50px;" id="globalpearls" type="text" onchange="javascript:mystorePearls('globalpearls')" ></textarea>
+  </span>
+  <span style="width: 600px; height: 5px; float: right">
+  </span>
+  <div style="width: 400px; vertical-align:middle; height: 30px; float: left">
+    <span style="width: 150px; vertical-align:middle; height: 30px; ">
+      <input style="width: 100px" id="moveNext" type="button" value="Previous" onclick="javascript:myMovePage('prevHilightedNode')" />
+    </span>
+    <span style="width: 150px; vertical-align:middle; height: 30px; ">
+      <input style="width: 100px" id="movePrev" type="button" value="Next" onclick="javascript:myMovePage('nextHilightedNode')" />
+    </span>
+    <span style="width: 20px; vertical-align:middle; height: 30px; ">
+      <input style="width: 20px" id="pos" type="text" value="0" />
+    </span>    
+  </div>
+  <span style="width: 200px; vertical-align:middle; height: 30px; float: right">
+    <input style="width: 200px" id="toggle" type="button" onclick="javascript:turnOnOff()" />
+  </span>
+</div>
+</form>
+</body>
+</html>
