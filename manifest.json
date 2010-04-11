@@ -1,0 +1,20 @@
+{
+  "name": "Pearls Extension",
+  "version": "1.0",
+  "description": "Always hilight a fixed set of words on chosen webpages.",
+  "browser_action": {
+    "default_icon": "pearl.png",
+    "popup" : "popup.html"
+  },
+  "background_page" : "background.html",
+  "content_scripts": [
+    {
+      "matches" : ["http://*/*"],
+      "js": ["pearlscript.js"],
+      "css" : ["pearlsstyle.css"]
+    }
+  ],
+  "permissions": [
+    "tabs"
+  ]
+}
