@@ -4,6 +4,47 @@
 <script src="pearlupdate.js" />
 <script>
 debug = false
+
+function localpearsinput(){
+  return document.getElementById('localpearls');
+}
+
+function globalpearsinput(){
+  return document.getElementById('globalpearls');
+}
+function loadedspan(){
+  return document.getElementById('loaded');
+}
+
+
+
+var TimeToFade = 2000
+function animateFade(lastTick, eid)
+{  
+  var curTick = new Date().getTime();
+  var elapsedTicks = curTick - lastTick;  
+  var element = document.getElementById(eid); 
+  if(element.FadeTimeLeft <= elapsedTicks)
+  {
+    element.style.opacity = 0
+    return;
+  } 
+  element.FadeTimeLeft -= elapsedTicks;
+  var newOpVal = element.FadeTimeLeft/TimeToFade;
+  element.style.opacity = newOpVal;
+  setTimeout("animateFade(" + curTick + ",'" + eid + "')", 33);
+}
+
+function fade(eid)
+{
+  var element = document.getElementById(eid);  
+  if(element == null)
+    return;
+  element.FadeTimeLeft = TimeToFade
+  setTimeout("animateFade(" + new Date().getTime() + ",'" + eid + "')", 33);
+  return;
+}
+
 function setPearls(pearltype){
   chrome.tabs.getSelected(null,function(tab) {
     setUrl(tab.url)
@@ -15,7 +56,8 @@ function setPearls(pearltype){
 function setToggle(){ 
   toggleInput = document.getElementById("toggle")
   toggled = loadToggle();  
-  toggleInput.value = toggled ? "Turn Off" : "Turn On";  
+  toggleInput.className = toggled ? 'on' : 'off';
+  toggleInput.value = toggled ? "Pearl On" : "Pearl Off";  
 }
 
 function turnOnOff(){  
@@ -29,12 +71,15 @@ function turnOnOff(){
 
 function mystorePearls(pearltype){
   if(debug) console.log('hey')
+  
   chrome.tabs.getSelected(null,function(tab) {
     if(debug) console.log(tab.url)
     setUrl(tab.url)
     pearlvalue = document.getElementById(pearltype).value
-    storePearls(pearltype,pearlvalue)
+    storePearls(pearltype,pearlvalue)    
     updatePage(tab)
+    loadedspan().style.opacity = 100;
+    fade('loaded')
   });
 }
 
@@ -45,13 +90,54 @@ function myMovePage(type){
    });
 }
 
+function cursorend(element){
+  if(debug) console.log('focused')
+  /*if (element.createTextRange)
+  {
+    var FieldRange = element.createTextRange();
+    FieldRange.moveStart('character', element.value.length);
+    FieldRange.collapse();
+    FieldRange.select();
+    
+    
+  }
+  element.setSelectionRange(element.value.length, element.value.length); */
+  element.value = element.value;
+}
+
+function inputkeypressed(e,element){
+  
+  if( e.which == 13 && ( element.id == 'localpearls' ) ){
+      e.preventDefault();
+      globalpearsinput().focus()
+      return;
+  }
+
+  if( e.which == 13 && (  element.id == 'globalpearls'  ) ){
+      e.preventDefault();
+      document.getElementById('moveNext').focus()
+      return;
+  }
+  
+  if( e.which == 27 ){
+    e.preventDefault();
+    element.blur();
+  }
+}
+
+function testingPopup(evt) {
+  alert('bye')
+}
+
 function main(){
   if(debug) console.log("Popup loading")
   setPearls("localpearls");
   setPearls("globalpearls");
   setToggle("toggle");
   if(debug) console.log("Popup loaded")
-  document.getElementById('localpearls').focus = true
+  localpearsinput().focus()
+  window.addEventListener("unload", testingPopup, false);
+ 
 }
 
 
@@ -85,9 +171,17 @@ input:hover, input:focus {
   background-color: #EEE;  
 }
 
+.off {
+  background-color: #F99;
+}
+
+.on {
+  background-color: #3F9;
+}
+
 </style>
 
-<body onload="javascript:main()">
+<body onload="javascript:main()" >
 <form>
 <div id="words">
   
@@ -97,7 +191,7 @@ input:hover, input:focus {
     This page pearls: 
   </span>
   <span style="width: 480px; height: 50px; float: right">
-    <textarea style="width: 480px; height: 50px;" id="localpearls" type="text" onchange="javascript:mystorePearls('localpearls')" ></textarea>
+    <textarea tabindex=1 style="width: 480px; height: 50px;" id="localpearls" type="text" onfocus="javascript:cursorend(this)" onkeydown="javascript:inputkeypressed(event,this)" onchange="javascript:mystorePearls('localpearls')" ></textarea>
   </span>
   <span style="width: 600px; height: 5px; float: right">
   </span>
@@ -105,23 +199,26 @@ input:hover, input:focus {
     Every page pearls: 
   </span>
   <span style="width: 480px; height: 50px; float: right">
-    <textarea style="width: 480px; height: 50px;" id="globalpearls" type="text" onchange="javascript:mystorePearls('globalpearls')" ></textarea>
+    <textarea tabindex=2 style="width: 480px; height: 50px;" id="globalpearls" type="text" onfocus="javascript:cursorend(this)" onkeydown="javascript:inputkeypressed(event,this)" onchange="javascript:mystorePearls('globalpearls')" ></textarea>
   </span>
   <span style="width: 600px; height: 5px; float: right">
   </span>
   <div style="width: 400px; vertical-align:middle; height: 30px; float: left">
     <span style="width: 150px; vertical-align:middle; height: 30px; ">
-      <input style="width: 100px" id="moveNext" type="button" value="Previous" onclick="javascript:myMovePage('prevHilightedNode')" />
+      <input tabindex=4 style="width: 100px" id="movePrev" type="button" value="Previous" onclick="javascript:myMovePage('prevHilightedNode')" />
     </span>
     <span style="width: 150px; vertical-align:middle; height: 30px; ">
-      <input style="width: 100px" id="movePrev" type="button" value="Next" onclick="javascript:myMovePage('nextHilightedNode')" />
+      <input tabindex=3 style="width: 100px" id="moveNext" type="button" value="Next" onclick="javascript:myMovePage('nextHilightedNode')" />
     </span>
     <span style="width: 20px; vertical-align:middle; height: 30px; ">
-      <input style="width: 20px" id="pos" type="text" value="0" />
+      <input tabindex=6 style="width: 20px" id="pos" type="text" value="0" />
     </span>    
-  </div>
+    <span  id="loaded" style="opacity: 0; width: 50px; vertical-align:middle; height: 30px; background-color: red; color: white; font-weight: bold; ">
+      Pearls Saved
+    </span>
+  </div>  
   <span style="width: 200px; vertical-align:middle; height: 30px; float: right">
-    <input style="width: 200px" id="toggle" type="button" onclick="javascript:turnOnOff()" />
+    <input tabindex=5 style="width: 200px" id="toggle" type="button" onclick="javascript:turnOnOff()" />
   </span>
 </div>
 </form>

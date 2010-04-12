@@ -52,7 +52,7 @@ function hiliteElement(elm, query) {
     }
 
     qre = new RegExp(qre.join("|"), "i");
-
+    if(debug) console.log(qre);
     var stylemapper = {};
     for (var i = 0; i < query.length; i ++) {
         /*if (Hilite.style_name_suffix)
@@ -68,11 +68,11 @@ function hiliteElement(elm, query) {
             var k = '';
             var node2 = node.splitText(match.index);
             var node3 = node2.splitText(val.length);
-            var span = node.ownerDocument.createElement('SPAN');
+            var span = node.ownerDocument.createElement('FONT');
             node.parentNode.replaceChild(span, node2);
             span.className = stylemapper[val.toLowerCase()];
             span.appendChild(node2);
-	    hilightedNodes[hilightedNodes.length] = span;
+            hilightedNodes[hilightedNodes.length] = span;            
 	    total++;
             return span;
         } else {
@@ -201,8 +201,9 @@ function hilightWords(wordsString) {
   var wordsArray = getWords(wordsString);
   if(debug) console.log("Hilight!!!")
   total = 0;
-  unhighlite();  
-  hiliteElement(document.body,wordsArray);
+  unhighlite();
+  if(wordsArray.length > 0)
+    hiliteElement(document.body,wordsArray);
   hilightedNodes = hilightedNodes.sort(function (nodea,nodeb) {
     posnodea = findPosXY(nodea);
     posnodeb = findPosXY(nodeb);
