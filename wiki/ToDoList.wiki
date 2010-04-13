@@ -6,6 +6,7 @@
   * Separated counters for each word
   * Separated keyboard navigation for each word
   * Different colors
+  * Alert on a unfocused tab title when pearls found (pearl icon?)
 
 = Known Issues =
   * Cannot highlight pages with frames: http://code.google.com/p/chromium/issues/detail?id=20773.
