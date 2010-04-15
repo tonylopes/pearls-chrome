@@ -1,5 +1,6 @@
+<!DOCTYPE HTML>
 <html>
-
+<head>
 <script src="pearlstorage.js" />
 <script src="pearlupdate.js" />
 <script>
@@ -69,6 +70,22 @@ function turnOnOff(){
   setToggle();
 }
 
+function setExact(){ 
+  exactInput = document.getElementById("exact")
+  exact = loadExact();  
+  exactInput.className = exact ? 'exact' : 'partial';
+  exactInput.value = exact ? "Exact" : "Partial";  
+}
+
+function turnExactPartial(){  
+  exact = loadExact();     
+  saveExact(!exact);  
+  chrome.tabs.getSelected(null,function(tab) {
+    updatePage(tab)
+  })
+  setExact();
+}
+
 function mystorePearls(pearltype){
   if(debug) console.log('hey')
   
@@ -83,7 +100,24 @@ function mystorePearls(pearltype){
   });
 }
 
+function hide(eid){
+  document.getElementById(eid).style.display = 'none'; 
+  //document.getElementById(eid).style.visibility = 'hidden' 
+}
+
+function hideUnhideConfig(){
+  el = document.getElementById('wordsConfig')
+  if( el.style.display == 'none' ){
+    el.style.display = 'block'; 
+    cursorend(localpearsinput())
+  }else{
+    el.style.display = 'none'; 
+  }
+}
+
+
 function myMovePage(type){
+  hide('wordsConfig')
   if(debug) console.log('move')
   chrome.tabs.getSelected(null,function(tab) {
     movePage('pos',type,tab)
@@ -129,11 +163,14 @@ function testingPopup(evt) {
   alert('bye')
 }
 
+
+
 function main(){
   if(debug) console.log("Popup loading")
   setPearls("localpearls");
   setPearls("globalpearls");
-  setToggle("toggle");
+  setToggle();
+  setExact();
   if(debug) console.log("Popup loaded")
   localpearsinput().focus()
   window.addEventListener("unload", testingPopup, false);
@@ -143,11 +180,13 @@ function main(){
 
 </script>
 <style>
+
 body {
-  width:600px;
-  overflow-x:hidden;
+  /*width:600px;
+  overflow-x:hidden;*/
   font-family: verdana; 
   font-size: 10px;  
+  opacity: 1;
 }
 
 input {
@@ -179,14 +218,35 @@ input:hover, input:focus {
   background-color: #3F9;
 }
 
-</style>
+.exact {
+  background-color: #3CF;
+}
 
+.partial {
+  background-color: #C9F;
+}
+</style>
+</head>
 <body onload="javascript:main()" >
-<form>
-<div id="words">
-  
+<div style="width: 600px; float: right;margin-bottom: 10px;">    
+  <span style="width: 370px; vertical-align:middle; height: 30px; float: left">    
+    <input tabindex=5 style="width: 100px" id="movePrev" type="button" value="Pearls" 
+	  onclick="javascript:hideUnhideConfig()" />       
+    <input tabindex=4 style="width: 100px" id="movePrev" type="button" value="Previous" 
+	  onclick="javascript:myMovePage('prevHilightedNode')" />       
+    <input tabindex=3 style="width: 100px" id="moveNext" type="button" value="Next"  
+	  onclick="javascript:myMovePage('nextHilightedNode')" />    
+    <input tabindex=8 style="width: 20px" id="pos" type="text" value="0" />    
+    <span  id="loaded" style="opacity: 0; width: 50px; vertical-align:middle; height: 30px; background-color: red; color: white; font-weight: bold; ">
+      Pearls Saved
+    </span>
+  </span>  
+  <span style="width: 200px; vertical-align:middle; height: 30px; float: right">
+    <input tabindex=6 style="width: 80px" id="exact" type="button" onclick="javascript:turnExactPartial()" />
+    <input tabindex=7 style="width: 80px" id="toggle" type="button" onclick="javascript:turnOnOff()" />
+  </span>
 </div>
-<div>
+<div id="wordsConfig" style="width: 600px; float: right; ">
   <span style="width: 120px; vertical-align:middle; height: 50px; float: left">
     This page pearls: 
   </span>
@@ -201,26 +261,6 @@ input:hover, input:focus {
   <span style="width: 480px; height: 50px; float: right">
     <textarea tabindex=2 style="width: 480px; height: 50px;" id="globalpearls" type="text" onfocus="javascript:cursorend(this)" onkeydown="javascript:inputkeypressed(event,this)" onchange="javascript:mystorePearls('globalpearls')" ></textarea>
   </span>
-  <span style="width: 600px; height: 5px; float: right">
-  </span>
-  <div style="width: 400px; vertical-align:middle; height: 30px; float: left">
-    <span style="width: 150px; vertical-align:middle; height: 30px; ">
-      <input tabindex=4 style="width: 100px" id="movePrev" type="button" value="Previous" onclick="javascript:myMovePage('prevHilightedNode')" />
-    </span>
-    <span style="width: 150px; vertical-align:middle; height: 30px; ">
-      <input tabindex=3 style="width: 100px" id="moveNext" type="button" value="Next" onclick="javascript:myMovePage('nextHilightedNode')" />
-    </span>
-    <span style="width: 20px; vertical-align:middle; height: 30px; ">
-      <input tabindex=6 style="width: 20px" id="pos" type="text" value="0" />
-    </span>    
-    <span  id="loaded" style="opacity: 0; width: 50px; vertical-align:middle; height: 30px; background-color: red; color: white; font-weight: bold; ">
-      Pearls Saved
-    </span>
-  </div>  
-  <span style="width: 200px; vertical-align:middle; height: 30px; float: right">
-    <input tabindex=5 style="width: 200px" id="toggle" type="button" onclick="javascript:turnOnOff()" />
-  </span>
 </div>
-</form>
 </body>
 </html>

@@ -1,10 +1,13 @@
 debug = false
 // The background page is asking us to find the words
+var exact = true;
 if (window == top) {
     chrome.extension.onRequest.addListener(function(req, sender, sendResponse) {        
       if(debug) console.log("pearlscript.js listened")
       if(req.type == "hilight" && req.toggled == true ) {
+	exact = req.exact;	
 	sendResponse(hilightWords(req.wordsString));
+
       } else if( req.type == "hilight" && req.toggled == false ) {
 	sendResponse(unhighlite());
       } else if( req.type == "nextHilightedNode" ){
@@ -45,12 +48,12 @@ function hiliteElement(elm, query) {
     var qre = new Array();
     for (var i = 0; i < query.length; i ++) {
         query[i] = query[i].toLowerCase();
-        //if (Hilite.exact)
+        if (exact)
             qre.push('\\b'+query[i]+'\\b');
-        /*else
-            qre.push(query[i]);*/
+        else 
+            qre.push(query[i]);
     }
-
+    
     qre = new RegExp(qre.join("|"), "i");
     if(debug) console.log(qre);
     var stylemapper = {};
@@ -98,12 +101,17 @@ function walkElements(node, depth, textproc) {
         }
 
         if (node.nodeType == 1) { // ELEMENT_NODE
-            if (!skipre.test(node.tagName) && node.childNodes.length > 0) {
+            if (!skipre.test(node.tagName) && 
+		node.className != 'pearl-hilighted-word' &&
+		node.className != 'pearl-current-hilighted-word' && 
+		node.childNodes.length > 0) {
                 node = node.childNodes[0];
                 depth ++;
                 continue;
             }
-        } else if (node.nodeType == 3) { // TEXT_NODE
+        } else if (node.nodeType == 3 && 
+	    node.className != 'pearl-current-hilighted-word' && 
+	    node.className != 'pearl-hilighted-word') { // TEXT_NODE
             node = textproc(node);
         }
 
@@ -125,9 +133,33 @@ function walkElements(node, depth, textproc) {
 
 
 function unhighlite(){
+  /*  if(hilightedNodes.length > 0){
+      //hilightedNodes.set('class',''); 
+      hilightedNodes.each(function(el) { 
+	//var tn = document.createTextNode(el.get('text')); 	  
+	 el.getParent().replaceChild(tn,el); 
+	el.getParent().replaceChild(el.childNodes[0],el); 
+
+      }); 
+    }*/
+
   for(i=0; i < hilightedNodes.length; i++){
-    hilightedNodes[i].className = "";
+      node = hilightedNodes[i];
+      realNode = node.previousSibling
+      otherNode = node.nextSibling
+
+      realNode.data += node.textContent
+      realNode.data += otherNode.data
+	
+      realNode.parentNode.removeChild(node)
+      realNode.parentNode.removeChild(otherNode)
+
+      //childNode = node.childNodes[0]
+      //node.parentNode.replaceChild(childNode,node)
+      //hilightedNodes[i].className = ""; 
   }
+  if(debug) console.log('Unhighlite: ' + hilightedNodes.length)
+  hilightedNodes = new Array()
   return { total: 0 };
 }
 
@@ -177,16 +209,22 @@ function findPosXY(obj)
 
 
 function goToNextHilightedNode(){  
+  if(currentNode != undefined)
+    currentNode.className = 'pearl-hilighted-word'
   nextHilightedNode();
   pos = findPosXY(currentNode)
+  currentNode.className = 'pearl-current-hilighted-word'
   window.scroll(pos.x,pos.y)
   if(debug) console.log("Next currentNode: " + currentPos + " AbsPos " + absolutePos() + " Pos (" + pos.x + "," + pos.y + ")")
   return absolutePos();
 }
 
 function goToPrevHilightedNode(){  
+  if(currentNode != undefined)
+    currentNode.className = 'pearl-hilighted-word'
   prevHilightedNode();
   pos = findPosXY(currentNode)
+  currentNode.className = 'pearl-current-hilighted-word'
   window.scroll(pos.x,pos.y)
   if(debug) console.log("Prev currentNode: " + currentPos + " AbsPos " + absolutePos() + " Pos (" + pos.x + "," + pos.y + ")")
   return absolutePos();
@@ -199,15 +237,17 @@ function hilightWords(wordsString) {
   var node = document.body;
   var done = false;
   var wordsArray = getWords(wordsString);
-  if(debug) console.log("Hilight!!!")
+  
   total = 0;
   unhighlite();
-  if(wordsArray.length > 0)
+  if(wordsArray.length > 0){
     hiliteElement(document.body,wordsArray);
+    if(debug) console.log("Hilight!!!")
+  }
   hilightedNodes = hilightedNodes.sort(function (nodea,nodeb) {
     posnodea = findPosXY(nodea);
     posnodeb = findPosXY(nodeb);
-    return posnodea.y == posnodeb.y ? posnodea.x - posnodea.x : posnodea.y - posnodeb.y; })
+    return posnodea.y == posnodeb.y ? posnodea.x - posnodeb.x : posnodea.y - posnodeb.y; })
   currentPos = -1;
 
   /*if(debug) console.log('Frames ' + window.frames.length)

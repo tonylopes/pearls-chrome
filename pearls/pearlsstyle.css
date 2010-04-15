@@ -1,4 +1,10 @@
+
 .pearl-hilighted-word {
   color:blue; 
   background-color:yellow;
-}
+} 
+
+.pearl-current-hilighted-word {
+  color: white; 
+  background-color: #00FF00;
+} 
