@@ -4,6 +4,25 @@ function setUrl(purl){
   url = purl;
 }
 
+function saveValue(key,value){
+  try {
+	localStorage[key] = value;
+      }catch(e) {
+	if(debug) console.log("Error inside getItem() for key:" + key);
+	if(debug) console.log(e);      
+      }
+  }
+         
+function loadValue(key){
+    try {
+      value = localStorage[key];
+    }catch(e) {
+      if(debug) console.log("Error inside getItem() for key:" + key);
+      if(debug) console.log(e);      
+    }
+  return value;  
+}
+
 function getKey(pearlType){    
   return pearlType == "localpearls" ? url : "http?://*/*"
 }
@@ -11,12 +30,7 @@ function getKey(pearlType){
 function getPearls(pearlType){
    var key = getKey(pearlType)
     if(debug) console.log("Getting Pearl! " + pearlType + " key: " + key)
-   try {
-      value = localStorage[key];
-    }catch(e) {
-      if(debug) console.log("Error inside getItem() for key:" + key);
-      if(debug) console.log(e);      
-    }
+  value = loadValue(key)
   if(debug) console.log("Pearl caught! " + value)
   if(value){
     return value;
@@ -37,32 +51,23 @@ function getAllPearls(){
 function storePearls(pearlType,value){
   if(debug) console.log("Storing pearl: " + pearlType);
   var key = getKey(pearlType)
-  
-  try {
-      if(debug) console.log("Inside setItem:" + key + ":" + value);
-      localStorage[key] =  value;
-    }catch(e) {
-      if(debug) console.log("Error inside setItem");
-      if(debug) console.log(e);
-    }
+  saveValue(key,value)
+}
+function saveToggle(value){
+  saveValue('toggled',value)
+}
+         
+function loadToggle(){    
+  value = loadValue('toggled');    
+  return value == "false" ? false : true;  
 }
 
-function saveToggle(value){
-  try {
-	localStorage['toggled'] = value;
-      }catch(e) {
-	if(debug) console.log("Error inside getItem() for key:" + key);
-	if(debug) console.log(e);      
-      }
-  }
+function saveExact(value){
+  saveValue('exact',value)
+}
          
-function loadToggle(){
-    try {
-      value = localStorage['toggled'];
-    }catch(e) {
-      if(debug) console.log("Error inside getItem() for key:" + key);
-      if(debug) console.log(e);      
-    }
+function loadExact(){    
+  value = loadValue('exact');    
   return value == "false" ? false : true;  
 }
 

@@ -4,7 +4,9 @@ function updatePage(tab) {
   setUrl(tab.url);
   wordsString = getAllPearls();
   toggled = loadToggle();
-  chrome.tabs.sendRequest(tab.id,{type: 'hilight', wordsString: wordsString, toggled: toggled}, function(response) {    
+  exact = loadExact();
+  if(debug) console.log('Exact ' + exact )
+  chrome.tabs.sendRequest(tab.id,{type: 'hilight', wordsString: wordsString, toggled: toggled, exact: exact}, function(response) {    
     if(debug) console.log('Totals :' + response)
     if (response && response.total == 0) {
       chrome.browserAction.setBadgeText( {text: '',tabId: tab.id} )
