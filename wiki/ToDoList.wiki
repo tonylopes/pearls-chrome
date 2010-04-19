@@ -1,14 +1,16 @@
 #summary ToDo-List
 
 = Features =
-
   * Keyboard shortcut to call the popup
   * Separated counters for each word
   * Separated keyboard navigation for each word
   * Different colors
   * Transparent background
   * Alert on a unfocused tab title when pearls found (pearl icon?)
-  * Option for Exact or part of words (Asian scripts need this?)
+  * Caption somewhere explaining how-to separate words
+
+= WA =
+  * An alert telling that the page needs reload in order to the extension to work.
 
 = Known Issues =
   * Cannot highlight pages with frames: http://code.google.com/p/chromium/issues/detail?id=20773.
