@@ -24,7 +24,9 @@ function loadValue(key){
 }
 
 function getKey(pearlType){    
-  return pearlType == "localpearls" ? url : "http?://*/*"
+  return pearlType == "localpearls" ? url : 
+  			pearlType == "domainpearls" ? url.split(/\/+/g)[0] + "//" + url.split(/\/+/g)[1] : 
+  			"http?://*/*"
 }
 
 function getPearls(pearlType){
@@ -41,9 +43,11 @@ function getPearls(pearlType){
 function getAllPearls(){
   if(debug) console.log("Getting all pearls")
   localPearls = getPearls("localpearls")
+  domainPearls = getPearls("domainpearls")
   globalPearls = getPearls("globalpearls")
   if(debug) console.log("All pearls caught")
-  return localPearls + ( localPearls.length > 0 ? "," : "") + globalPearls + "";
+  localAndDomain = localPearls + ( localPearls.length > 0 ? "," : "") + domainPearls;
+  return localAndDomain + ( localAndDomain.length > 0 ? "," : "") + globalPearls + "";
 
 }
   

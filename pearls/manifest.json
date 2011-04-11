@@ -1,6 +1,6 @@
 {
   "name": "Pearls Extension",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Always highlight a set of words stored for chosen webpages.",  
   "update_url": "http://pearls-chrome.googlecode.com/files/pearls-update-v1.xml",
    "icons": {

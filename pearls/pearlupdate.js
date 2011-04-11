@@ -7,7 +7,7 @@ function updatePage(tab) {
   exact = loadExact();
   if(debug) console.log('Exact ' + exact )
   chrome.tabs.sendRequest(tab.id,{type: 'hilight', wordsString: wordsString, toggled: toggled, exact: exact}, function(response) {    
-    if(debug) console.log('Totals :' + response)
+    if(debug) console.log('Totals :' + response.total)    
     if (response && response.total == 0) {
       chrome.browserAction.setBadgeText( {text: '',tabId: tab.id} )
     } else if(response && response.total ) {

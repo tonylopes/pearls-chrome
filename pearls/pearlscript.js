@@ -1,19 +1,35 @@
 debug = false
 // The background page is asking us to find the words
 var exact = true;
+
+var colors = [
+	['black', '#FF6'],
+	['black', '#A0FFFF'], 
+	['black', '#9F9'],
+	['black', '#F99'],
+	['black', '#F6F'],
+	['white', '#800'],
+	['white', '#0A0'],
+	['white', '#886800'],
+	['white', '#004699'],
+	['white', '#909']]
+
+var wordsColorsStr = '';
+
 if (window == top) {
     chrome.extension.onRequest.addListener(function(req, sender, sendResponse) {        
       if(debug) console.log("pearlscript.js listened")
       if(req.type == "hilight" && req.toggled == true ) {
 	exact = req.exact;	
 	sendResponse(hilightWords(req.wordsString));
-
       } else if( req.type == "hilight" && req.toggled == false ) {
 	sendResponse(unhighlite());
       } else if( req.type == "nextHilightedNode" ){
 	sendResponse(goToNextHilightedNode());
       } else if( req.type == "prevHilightedNode" ){
 	sendResponse(goToPrevHilightedNode());
+      } else if( req.type == "wordsColors" ){
+	sendResponse({wordsColors: wordsColorsStr});
       } else {
 	sendResponse({});
       }
@@ -35,12 +51,14 @@ function getWords(pearlsString){
 }
 
 
-
 /**
  * Highlight a DOM element with a list of keywords.
  */
 hilightedNodes = Array();
+var wordsColors = Array()
 var total = 0;
+
+	
 function hiliteElement(elm, query) {
     if (!query || elm.childNodes.length == 0)
 	return;
@@ -56,24 +74,28 @@ function hiliteElement(elm, query) {
     
     qre = new RegExp(qre.join("|"), "i");
     if(debug) console.log(qre);
-    var stylemapper = {};
-    for (var i = 0; i < query.length; i ++) {
-        /*if (Hilite.style_name_suffix)
-            stylemapper[query[i]] = Hilite.style_name+(i+1);
-        else*/
-            stylemapper[query[i]] = 'pearl-hilighted-word';
-    }
+    
+
+    curColor = 0
 
     var textproc = function(node) {
         var match = qre.exec(node.data);
         if (match) {
-            var val = match[0];
+            var val = match[0].toLowerCase();
             var k = '';
             var node2 = node.splitText(match.index);
             var node3 = node2.splitText(val.length);
             var span = node.ownerDocument.createElement('FONT');
+            
             node.parentNode.replaceChild(span, node2);
-            span.className = stylemapper[val.toLowerCase()];
+            span.className = 'pearl-hilighted-word'
+            if(!wordsColors[val]){
+            	wordsColors[val] = colors[curColor]
+            	curColor = (curColor+1)%colors.length
+            }            
+            span.style.color = wordsColors[val][0]; 
+            span.style.background = wordsColors[val][1];
+            
             span.appendChild(node2);
             hilightedNodes[hilightedNodes.length] = span;            
 	    total++;
@@ -82,7 +104,7 @@ function hiliteElement(elm, query) {
             return node;
         }
     };
-    walkElements(elm.childNodes[0], 1, textproc);
+    walkElements(elm.childNodes[0], 1, textproc);    
 };
 
 
@@ -160,6 +182,8 @@ function unhighlite(){
   }
   if(debug) console.log('Unhighlite: ' + hilightedNodes.length)
   hilightedNodes = new Array()
+  wordsColors = Array();
+  wordsColorsStr = '';
   return { total: 0 };
 }
 
@@ -208,9 +232,13 @@ function findPosXY(obj)
 }
 
 
-function goToNextHilightedNode(){  
-  if(currentNode != undefined)
+function goToNextHilightedNode(){  	
+  if(currentNode != undefined){
     currentNode.className = 'pearl-hilighted-word'
+    val = currentNode.childNodes[0].data.toLowerCase()    
+    currentNode.style.color = wordsColors[val][0]; 
+    currentNode.style.background = wordsColors[val][1];
+  }
   nextHilightedNode();
   pos = findPosXY(currentNode)
   currentNode.className = 'pearl-current-hilighted-word'
@@ -220,8 +248,12 @@ function goToNextHilightedNode(){
 }
 
 function goToPrevHilightedNode(){  
-  if(currentNode != undefined)
+  if(currentNode != undefined){
     currentNode.className = 'pearl-hilighted-word'
+    val = currentNode.childNodes[0].data.toLowerCase()  
+    currentNode.style.color = wordsColors[val][0]; 
+    currentNode.style.background = wordsColors[val][1];
+  }
   prevHilightedNode();
   pos = findPosXY(currentNode)
   currentNode.className = 'pearl-current-hilighted-word'
@@ -237,9 +269,10 @@ function hilightWords(wordsString) {
   var node = document.body;
   var done = false;
   var wordsArray = getWords(wordsString);
-  
+  wordsColors = Array();
   total = 0;
   unhighlite();
+ 
   if(wordsArray.length > 0){
     hiliteElement(document.body,wordsArray);
     if(debug) console.log("Hilight!!!")
@@ -266,7 +299,11 @@ function hilightWords(wordsString) {
     return nodea.scrollTop - nodeb.scrollTop; })
   currentNode = null;
   currentNode = nextNode();
-  positionScroll(currentNode);*/
+  positionScroll(currentNode);*/  
+  wordsColorsStr = ''
+  for(var val in wordsColors)
+  	wordsColorsStr += val +',' + wordsColors[val][0] + ',' + wordsColors[val][1] + ',';    	  
+  
   return { total: total };
 }
 
