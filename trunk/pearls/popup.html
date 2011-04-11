@@ -4,20 +4,51 @@
 <script type="text/javascript" src="pearlstorage.js" ></script>
 <script type="text/javascript" src="pearlupdate.js" ></script>
 <script>
-debug = true
+debug = false
+
+function setFoundPearls() {
+  chrome.tabs.getSelected(null,function(tab) {
+	  chrome.tabs.sendRequest(tab.id,{type: 'wordsColors'}, function(response) {
+		  if (response) {		  	
+		  	node = document.getElementById('pearlsFound')
+		  	node.innerHTML ="";
+		  	wordsColors = response.wordsColors.split(',')
+		  	show = false
+		  	for(i=1; i < wordsColors.length ; i+=3){  		
+			    var span = document.createElement('FONT');	    	    
+				span.innerText = wordsColors[i-1];	    	                
+			    span.style.color = wordsColors[i]; 
+			    span.style.background = wordsColors[i+1];	    
+			    node.appendChild(span);
+			    var space = document.createTextNode(' ');
+			    node.appendChild(space);
+			    show = true
+		  	} 		  	
+		  	if(show){
+		  		document.getElementById('wordsFound').style.display = 'block'
+		  	}else{
+		  		document.getElementById('wordsFound').style.display = 'none'
+		  	}
+		  }else{
+		  	document.getElementById('wordsFound').style.display = 'none'
+		  }
+	  })
+  })
+}
+
 
 function localpearsinput(){
   return document.getElementById('localpearls');
 }
-
+function domainpearsinput(){
+  return document.getElementById('domainpearls');
+}
 function globalpearsinput(){
   return document.getElementById('globalpearls');
 }
 function loadedspan(){
   return document.getElementById('loaded');
 }
-
-
 
 var TimeToFade = 2000
 function animateFade(lastTick, eid)
@@ -49,8 +80,8 @@ function fade(eid)
 function setPearls(pearltype){
   chrome.tabs.getSelected(null,function(tab) {
     setUrl(tab.url)
-    localpearlsInput = document.getElementById(pearltype );
-    localpearlsInput.value = getPearls(pearltype);
+    pearlsInput = document.getElementById(pearltype );
+    pearlsInput.value = getPearls(pearltype);
   });
 }
 
@@ -68,6 +99,7 @@ function turnOnOff(){
     updatePage(tab)
   })
   setToggle();
+  setFoundPearls();
 }
 
 function setExact(){ 
@@ -84,6 +116,7 @@ function turnExactPartial(){
     updatePage(tab)
   })
   setExact();
+  setFoundPearls();
 }
 
 function mystorePearls(pearltype){
@@ -97,6 +130,7 @@ function mystorePearls(pearltype){
     updatePage(tab)
     loadedspan().style.opacity = 100;
     fade('loaded')
+    setFoundPearls();
   });
 }
 
@@ -105,8 +139,8 @@ function hide(eid){
   //document.getElementById(eid).style.visibility = 'hidden' 
 }
 
-function hideUnhideConfig(){
-  el = document.getElementById('wordsConfig')
+function hideUnhide(elementId){
+  el = document.getElementById(elementId)
   if( el.style.display == 'none' ){
     el.style.display = 'block'; 
     cursorend(localpearsinput())
@@ -115,6 +149,9 @@ function hideUnhideConfig(){
   }
 }
 
+function hideUnhideConfig(){
+	hideUnhide('wordsConfig')
+}
 
 function myMovePage(type){
   hide('wordsConfig')
@@ -124,24 +161,24 @@ function myMovePage(type){
    });
 }
 
+function loadFound(wordsColors){
+ alert(wordsColors);
+}
+
 function cursorend(element){
   if(debug) console.log('focused')
-  /*if (element.createTextRange)
-  {
-    var FieldRange = element.createTextRange();
-    FieldRange.moveStart('character', element.value.length);
-    FieldRange.collapse();
-    FieldRange.select();
-    
-    
-  }
-  element.setSelectionRange(element.value.length, element.value.length); */
   element.value = element.value;
 }
 
 function inputkeypressed(e,element){
   
   if( e.which == 13 && ( element.id == 'localpearls' ) ){
+      e.preventDefault();
+      domainpearsinput().focus()
+      return;
+  }
+  
+  if( e.which == 13 && ( element.id == 'domainpearls' ) ){
       e.preventDefault();
       globalpearsinput().focus()
       return;
@@ -168,9 +205,11 @@ function testingPopup(evt) {
 function main(){
   if(debug) console.log("Popup loading")
   setPearls("localpearls");
+  setPearls("domainpearls");
   setPearls("globalpearls");
   setToggle();
   setExact();
+  setFoundPearls();
   if(debug) console.log("Popup loaded")
   localpearsinput().focus()
   window.addEventListener("unload", testingPopup, false);
@@ -181,11 +220,17 @@ function main(){
 </script>
 <style>
 
+html {margin:0px; padding:0px;} 
+body { margin:0px; padding:0px; } 
+img { margin:0px; padding:0px; border:none;} 
+div { margin:0px; padding:0px; }
 body {
   /*width:600px;
   overflow-x:hidden;*/
   font-family: verdana; 
   font-size: 10px;  
+  padding: 0px;
+  margin: 0px;
   opacity: 1;
 }
 
@@ -228,25 +273,25 @@ input:hover, input:focus {
 </style>
 </head>
 <body onload="javascript:main()" >
-<div style="width: 600px; float: right;margin-bottom: 10px;">    
-  <span style="width: 370px; vertical-align:middle; height: 30px; float: left">    
-    <input tabindex=5 style="width: 100px" id="movePrev" type="button" value="Pearls" 
+<div style="display:block; width: 600px; float: right; padding-top: 4px;">    
+  <span style="width: 370px; vertical-align:middle; height: 10px; float: left">    
+    <input tabindex=5 style="width: 80px" id="movePrev" type="button" value="Pearls" 
 	  onclick="javascript:hideUnhideConfig()" />       
-    <input tabindex=4 style="width: 100px" id="movePrev" type="button" value="Previous" 
+    <input tabindex=4 style="width: 80px" id="movePrev" type="button" value="Previous" 
 	  onclick="javascript:myMovePage('prevHilightedNode')" />       
-    <input tabindex=3 style="width: 100px" id="moveNext" type="button" value="Next"  
+    <input tabindex=3 style="width: 80px" id="moveNext" type="button" value="Next"  
 	  onclick="javascript:myMovePage('nextHilightedNode')" />    
     <input tabindex=8 style="width: 20px" id="pos" type="text" value="0" />    
-    <span  id="loaded" style="opacity: 0; width: 50px; vertical-align:middle; height: 30px; background-color: red; color: white; font-weight: bold; ">
+    <span  id="loaded" style="opacity: 0; width: 50px; vertical-align:middle; height: 10px; background-color: red; color: white; font-weight: bold; ">
       Pearls Saved
     </span>
   </span>  
-  <span style="width: 200px; vertical-align:middle; height: 30px; float: right">
+  <span style="width: 200px; vertical-align:middle; height: 10px; float: right">
     <input tabindex=6 style="width: 80px" id="exact" type="button" onclick="javascript:turnExactPartial()" />
     <input tabindex=7 style="width: 80px" id="toggle" type="button" onclick="javascript:turnOnOff()" />
   </span>
 </div>
-<div id="wordsConfig" style="width: 600px; float: right; ">
+<div id="wordsConfig" style="display:block; width: 600px; float: right; padding-top: 10px; ">
   <span style="width: 120px; vertical-align:middle; height: 50px; float: left">
     This page pearls: 
   </span>
@@ -256,11 +301,27 @@ input:hover, input:focus {
   <span style="width: 600px; height: 5px; float: right">
   </span>
   <span style="width: 120px; vertical-align:middle; height: 50px; float: left">
+    This domain pearls: 
+  </span>
+  <span style="width: 480px; height: 50px; float: right">
+    <textarea tabindex=1 style="width: 480px; height: 50px;" id="domainpearls" type="text" onfocus="javascript:cursorend(this)" onkeydown="javascript:inputkeypressed(event,this)" onchange="javascript:mystorePearls('domainpearls')" ></textarea>
+  </span>
+  <span style="width: 600px; height: 5px; float: right">
+  </span>
+  <span style="width: 120px; vertical-align:middle; height: 50px; float: left">
     Every page pearls: 
   </span>
   <span style="width: 480px; height: 50px; float: right">
     <textarea tabindex=2 style="width: 480px; height: 50px;" id="globalpearls" type="text" onfocus="javascript:cursorend(this)" onkeydown="javascript:inputkeypressed(event,this)" onchange="javascript:mystorePearls('globalpearls')" ></textarea>
   </span>
+  <div id="wordsFound" style="display:none; width: 600px; float: right; padding-top: 10px; ">
+	<span style="width: 120px; vertical-align:middle; height: 50px; float: left">
+    Pearls found:
+  </span>
+  <span style="width: 480px; height: 50px; float: right">
+    <div style="width: 480px; " id="pearlsFound" ></div>
+  </span>
+</div>
 </div>
 </body>
 </html>
