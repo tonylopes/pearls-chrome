@@ -1,20 +1,23 @@
 {
   "name": "Pearls Extension",
-  "version": "1.0.5",
-  "description": "Always highlight a set of words stored for chosen webpages.",  
-  "update_url": "http://pearls-chrome.googlecode.com/files/pearls-update-v1.xml",
-   "icons": {
-      "128": "pearl128.png",
-      "48": "pearl48.png"
-   },
+  "version": "1.0.6",
+  "manifest_version": 2,
+  "description": "Always highlight a set of words stored for chosen webpages.",
+  "icons": {
+    "16": "pearl16.png",
+    "48": "pearl48.png",
+    "128": "pearl128.png"
+  },
   "browser_action": {
     "default_icon": "pearl.png",
-    "popup" : "popup.html"
+    "default_popup": "popup.html"
   },
-  "background_page" : "background.html",
+  "background": {
+    "scripts": ["pearlstorage.js", "pearlupdate.js", "pearlload.js"]
+  },
   "content_scripts": [
     {
-    	"matches" : ["http://*/*", "https://*/*" ], 
+      "matches": ["http://*/*", "https://*/*", "file://*"], 
       "js": ["pearlscript.js"],
       "css" : ["pearlsstyle.css"]
     }

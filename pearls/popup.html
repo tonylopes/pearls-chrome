@@ -1,225 +1,10 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-<script type="text/javascript" src="pearlstorage.js" ></script>
-<script type="text/javascript" src="pearlupdate.js" ></script>
-<script>
-debug = false
-
-function setFoundPearls() {
-  chrome.tabs.getSelected(null,function(tab) {
-	  chrome.tabs.sendRequest(tab.id,{type: 'wordsColors'}, function(response) {
-		  if (response) {		  	
-		  	node = document.getElementById('pearlsFound')
-		  	node.innerHTML ="";
-		  	wordsColors = response.wordsColors.split(',')
-		  	show = false
-		  	for(i=1; i < wordsColors.length ; i+=3){  		
-			    var span = document.createElement('FONT');	    	    
-				span.innerText = wordsColors[i-1];	    	                
-			    span.style.color = wordsColors[i]; 
-			    span.style.background = wordsColors[i+1];	    
-			    node.appendChild(span);
-			    var space = document.createTextNode(' ');
-			    node.appendChild(space);
-			    show = true
-		  	} 		  	
-		  	if(show){
-		  		document.getElementById('wordsFound').style.display = 'block'
-		  	}else{
-		  		document.getElementById('wordsFound').style.display = 'none'
-		  	}
-		  }else{
-		  	document.getElementById('wordsFound').style.display = 'none'
-		  }
-	  })
-  })
-}
-
-
-function localpearsinput(){
-  return document.getElementById('localpearls');
-}
-function domainpearsinput(){
-  return document.getElementById('domainpearls');
-}
-function globalpearsinput(){
-  return document.getElementById('globalpearls');
-}
-function loadedspan(){
-  return document.getElementById('loaded');
-}
-
-var TimeToFade = 2000
-function animateFade(lastTick, eid)
-{  
-  var curTick = new Date().getTime();
-  var elapsedTicks = curTick - lastTick;  
-  var element = document.getElementById(eid); 
-  if(element.FadeTimeLeft <= elapsedTicks)
-  {
-    element.style.opacity = 0
-    return;
-  } 
-  element.FadeTimeLeft -= elapsedTicks;
-  var newOpVal = element.FadeTimeLeft/TimeToFade;
-  element.style.opacity = newOpVal;
-  setTimeout("animateFade(" + curTick + ",'" + eid + "')", 33);
-}
-
-function fade(eid)
-{
-  var element = document.getElementById(eid);  
-  if(element == null)
-    return;
-  element.FadeTimeLeft = TimeToFade
-  setTimeout("animateFade(" + new Date().getTime() + ",'" + eid + "')", 33);
-  return;
-}
-
-function setPearls(pearltype){
-  chrome.tabs.getSelected(null,function(tab) {
-    setUrl(tab.url)
-    pearlsInput = document.getElementById(pearltype );
-    pearlsInput.value = getPearls(pearltype);
-  });
-}
-
-function setToggle(){ 
-  toggleInput = document.getElementById("toggle")
-  toggled = loadToggle();  
-  toggleInput.className = toggled ? 'on' : 'off';
-  toggleInput.value = toggled ? "Pearl On" : "Pearl Off";  
-}
-
-function turnOnOff(){  
-  toggled = loadToggle();     
-  saveToggle(!toggled);  
-  chrome.tabs.getSelected(null,function(tab) {
-    updatePage(tab)
-  })
-  setToggle();
-  setFoundPearls();
-}
-
-function setExact(){ 
-  exactInput = document.getElementById("exact")
-  exact = loadExact();  
-  exactInput.className = exact ? 'exact' : 'partial';
-  exactInput.value = exact ? "Exact" : "Partial";  
-}
-
-function turnExactPartial(){  
-  exact = loadExact();     
-  saveExact(!exact);  
-  chrome.tabs.getSelected(null,function(tab) {
-    updatePage(tab)
-  })
-  setExact();
-  setFoundPearls();
-}
-
-function mystorePearls(pearltype){
-  if(debug) console.log('hey')
-  
-  chrome.tabs.getSelected(null,function(tab) {
-    if(debug) console.log(tab.url)
-    setUrl(tab.url)
-    pearlvalue = document.getElementById(pearltype).value
-    storePearls(pearltype,pearlvalue)    
-    updatePage(tab)
-    loadedspan().style.opacity = 100;
-    fade('loaded')
-    setFoundPearls();
-  });
-}
-
-function hide(eid){
-  document.getElementById(eid).style.display = 'none'; 
-  //document.getElementById(eid).style.visibility = 'hidden' 
-}
-
-function hideUnhide(elementId){
-  el = document.getElementById(elementId)
-  if( el.style.display == 'none' ){
-    el.style.display = 'block'; 
-    cursorend(localpearsinput())
-  }else{
-    el.style.display = 'none'; 
-  }
-}
-
-function hideUnhideConfig(){
-	hideUnhide('wordsConfig')
-}
-
-function myMovePage(type){
-  hide('wordsConfig')
-  if(debug) console.log('move')
-  chrome.tabs.getSelected(null,function(tab) {
-    movePage('pos',type,tab)
-   });
-}
-
-function loadFound(wordsColors){
- alert(wordsColors);
-}
-
-function cursorend(element){
-  if(debug) console.log('focused')
-  element.value = element.value;
-}
-
-function inputkeypressed(e,element){
-  
-  if( e.which == 13 && ( element.id == 'localpearls' ) ){
-      e.preventDefault();
-      domainpearsinput().focus()
-      return;
-  }
-  
-  if( e.which == 13 && ( element.id == 'domainpearls' ) ){
-      e.preventDefault();
-      globalpearsinput().focus()
-      return;
-  }
-
-  if( e.which == 13 && (  element.id == 'globalpearls'  ) ){
-      e.preventDefault();
-      document.getElementById('moveNext').focus()
-      return;
-  }
-  
-  if( e.which == 27 ){
-    e.preventDefault();
-    element.blur();
-  }
-}
-
-function testingPopup(evt) {
-  alert('bye')
-}
-
-
-
-function main(){
-  if(debug) console.log("Popup loading")
-  setPearls("localpearls");
-  setPearls("domainpearls");
-  setPearls("globalpearls");
-  setToggle();
-  setExact();
-  setFoundPearls();
-  if(debug) console.log("Popup loaded")
-  localpearsinput().focus()
-  window.addEventListener("unload", testingPopup, false);
- 
-}
-
-
-</script>
+  <script type="text/javascript" src="pearlstorage.js" ></script>
+  <script type="text/javascript" src="pearlupdate.js" ></script>
+  <script type="text/javascript" src="pearldialog.js" ></script>
 <style>
-
 html {margin:0px; padding:0px;} 
 body { margin:0px; padding:0px; } 
 img { margin:0px; padding:0px; border:none;} 
@@ -272,56 +57,64 @@ input:hover, input:focus {
 }
 </style>
 </head>
-<body onload="javascript:main()" >
-<div style="display:block; width: 600px; float: right; padding-top: 4px;">    
-  <span style="width: 370px; vertical-align:middle; height: 10px; float: left">    
-    <input tabindex=5 style="width: 80px" id="movePrev" type="button" value="Pearls" 
-	  onclick="javascript:hideUnhideConfig()" />       
-    <input tabindex=4 style="width: 80px" id="movePrev" type="button" value="Previous" 
-	  onclick="javascript:myMovePage('prevHilightedNode')" />       
-    <input tabindex=3 style="width: 80px" id="moveNext" type="button" value="Next"  
-	  onclick="javascript:myMovePage('nextHilightedNode')" />    
-    <input tabindex=8 style="width: 20px" id="pos" type="text" value="0" />    
-    <span  id="loaded" style="opacity: 0; width: 50px; vertical-align:middle; height: 10px; background-color: red; color: white; font-weight: bold; ">
-      Pearls Saved
+<body>
+  <div style="display:block; width: 600px; float: right; padding-top: 4px;">    
+    <span style="width: 370px; vertical-align:middle; height: 10px; float: left">    
+      <input tabindex=5 style="width: 80px" id="configBtn" type="button" value="Pearls" />
+      <!--onclick="javascript:hideUnhideConfig()" /> -->
+      <input tabindex=4 style="width: 80px" id="movePrevBtn" type="button" value="Previous" />
+      <!--onclick="javascript:myMovePage('prevHilightedNode')" /> -->
+      <input tabindex=3 style="width: 80px" id="moveNextBtn" type="button" value="Next" />  
+      <!--onclick="javascript:myMovePage('nextHilightedNode')" />    -->
+      <input tabindex=8 style="width: 20px" id="pos" type="text" value="0" />    
+      <span  id="loaded" style="opacity: 0; width: 50px; vertical-align:middle; height: 10px; background-color: red; color: white; font-weight: bold; ">
+        Pearls Saved
+      </span>
+    </span>  
+    <span style="width: 200px; vertical-align:middle; height: 10px; float: right">
+      <input tabindex=6 style="width: 80px" id="exactBtn" type="button" />
+      <!--onclick="javascript:turnExactPartial()" />-->
+      <input tabindex=7 style="width: 80px" id="toggleBtn" type="button" />
+      <!--onclick="javascript:turnOnOff()" />-->
     </span>
-  </span>  
-  <span style="width: 200px; vertical-align:middle; height: 10px; float: right">
-    <input tabindex=6 style="width: 80px" id="exact" type="button" onclick="javascript:turnExactPartial()" />
-    <input tabindex=7 style="width: 80px" id="toggle" type="button" onclick="javascript:turnOnOff()" />
-  </span>
-</div>
-<div id="wordsConfig" style="display:block; width: 600px; float: right; padding-top: 10px; ">
-  <span style="width: 120px; vertical-align:middle; height: 50px; float: left">
-    This page pearls: 
-  </span>
-  <span style="width: 480px; height: 50px; float: right">
-    <textarea tabindex=1 style="width: 480px; height: 50px;" id="localpearls" type="text" onfocus="javascript:cursorend(this)" onkeydown="javascript:inputkeypressed(event,this)" onchange="javascript:mystorePearls('localpearls')" ></textarea>
-  </span>
-  <span style="width: 600px; height: 5px; float: right">
-  </span>
-  <span style="width: 120px; vertical-align:middle; height: 50px; float: left">
-    This domain pearls: 
-  </span>
-  <span style="width: 480px; height: 50px; float: right">
-    <textarea tabindex=1 style="width: 480px; height: 50px;" id="domainpearls" type="text" onfocus="javascript:cursorend(this)" onkeydown="javascript:inputkeypressed(event,this)" onchange="javascript:mystorePearls('domainpearls')" ></textarea>
-  </span>
-  <span style="width: 600px; height: 5px; float: right">
-  </span>
-  <span style="width: 120px; vertical-align:middle; height: 50px; float: left">
-    Every page pearls: 
-  </span>
-  <span style="width: 480px; height: 50px; float: right">
-    <textarea tabindex=2 style="width: 480px; height: 50px;" id="globalpearls" type="text" onfocus="javascript:cursorend(this)" onkeydown="javascript:inputkeypressed(event,this)" onchange="javascript:mystorePearls('globalpearls')" ></textarea>
-  </span>
-  <div id="wordsFound" style="display:none; width: 600px; float: right; padding-top: 10px; ">
-	<span style="width: 120px; vertical-align:middle; height: 50px; float: left">
-    Pearls found:
-  </span>
-  <span style="width: 480px; height: 50px; float: right">
-    <div style="width: 480px; " id="pearlsFound" ></div>
-  </span>
-</div>
-</div>
+  </div>
+  <div id="wordsConfig" style="display:block; width: 600px; float: right; padding-top: 10px; ">
+    <span style="width: 120px; vertical-align:middle; height: 50px; float: left">
+      This page pearls: 
+    </span>
+    <span style="width: 480px; height: 50px; float: right">
+      <textarea tabindex=1 style="width: 480px; height: 50px;" id="localpearls" type="text">
+      </textarea>
+       <!--onfocus="javascript:cursorend(this)" onkeydown="javascript:inputkeypressed(event,this)" onchange="javascript:mystorePearls('localpearls')" >-->
+    </span>
+    <span style="width: 600px; height: 5px; float: right">
+    </span>
+    <span style="width: 120px; vertical-align:middle; height: 50px; float: left">
+      This domain pearls: 
+    </span>
+    <span style="width: 480px; height: 50px; float: right">
+      <textarea tabindex=1 style="width: 480px; height: 50px;" id="domainpearls" type="text" >
+      </textarea>
+      <!--onfocus="javascript:cursorend(this)" onkeydown="javascript:inputkeypressed(event,this)" onchange="javascript:mystorePearls('domainpearls')" ></textarea>-->
+    </span>
+    <span style="width: 600px; height: 5px; float: right">
+    </span>
+    <span style="width: 120px; vertical-align:middle; height: 50px; float: left">
+      Every page pearls: 
+    </span>
+    <span style="width: 480px; height: 50px; float: right">
+      <textarea tabindex=2 style="width: 480px; height: 50px;" id="globalpearls" type="text" >
+      </textarea>
+      <!--onfocus="javascript:cursorend(this)" onkeydown="javascript:inputkeypressed(event,this)" onchange="javascript:mystorePearls('globalpearls')" ></textarea>-->
+    </span>
+    <div id="wordsFound" style="display:none; width: 600px; float: right; padding-top: 10px; ">
+      <span style="width: 120px; vertical-align:middle; height: 50px; float: left">
+        Pearls found:
+      </span>
+      <span style="width: 480px; height: 50px; float: right">
+        <div style="width: 480px; " id="pearlsFound" ></div>
+      </span>
+    </div>
+  </div>
 </body>
 </html>
