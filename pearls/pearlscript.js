@@ -1,4 +1,4 @@
-debug = true
+debug = false
 // The background page is asking us to find the words
 var exact = true;
 
@@ -18,17 +18,17 @@ var wordsColorsStr = '';
 
 if (window == top) {
   chrome.extension.onRequest.addListener(function(req, sender, sendResponse) {        
-    if(debug) console.log("pearlscript.js listened")
-      if(req.type == "hilight" && req.toggled == true ) {
+    if (debug) console.log("pearlscript.js listened")
+      if (req.type == "hilight" && req.toggled == true) {
         exact = req.exact;  
         sendResponse(hilightWords(req.wordsString));
-      } else if( req.type == "hilight" && req.toggled == false ) {
+      } else if (req.type == "hilight" && req.toggled == false) {
         sendResponse(unhighlite());
-      } else if( req.type == "nextHilightedNode" ){
+      } else if (req.type == "nextHilightedNode") {
         sendResponse(goToNextHilightedNode());
-      } else if( req.type == "prevHilightedNode" ){
+      } else if (req.type == "prevHilightedNode") {
         sendResponse(goToPrevHilightedNode());
-      } else if( req.type == "wordsColors" ){
+      } else if (req.type == "wordsColors") {
         sendResponse({wordsColors: wordsColorsStr});
       } else {
         sendResponse({});
@@ -36,17 +36,21 @@ if (window == top) {
     });
 }
 
+function normalizeWords(pearlsString) {
+  return (pearlsString+'').replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1")
+}
+
 function getWords(pearlsString) {
- if(debug) console.log(" Pearl String INI: " + pearlsString)
+  if (debug) console.log(" Pearl String INI: " + pearlsString);
   pearls = pearlsString.length > 0 ? pearlsString.split(",") : new Array();
-  new_pearls = new Array()
-  for(i=0; i < pearls.length; i++){
-    one_pearl = pearls[i].replace(/^\s+|\s+$/g,"");
-    if( one_pearl != "")
+  new_pearls = new Array();
+  for (i=0; i < pearls.length; i++){
+    one_pearl = pearls[i].replace(/^\s+|\s+$/g, "");
+    if (one_pearl != "")
       new_pearls[new_pearls.length] = one_pearl;
   }
-  if(debug) console.log(" Pearl String END: " + new_pearls)
-    return new_pearls; 
+  if (debug) console.log(" Pearl String END: " + new_pearls);
+  return new_pearls; 
 }
 
 /**
@@ -56,49 +60,60 @@ hilightedNodes = Array();
 var wordsColors = Array()
 var total = 0;
 
-function hiliteElement(elm, query) {
-  if (!query || elm.childNodes.length == 0)
+function hiliteElement(elm, wordsArray) {
+  if (!wordsArray || elm.childNodes.length == 0)
     return;
 
-  var qre = new Array();
-  for (var i = 0; i < query.length; i ++) {
-    query[i] = query[i].toLowerCase();
-    if (exact)
-      qre.push('\\b'+query[i]+'\\b');
+  var qre_inse_parts = new Array(); // insensitive words
+  var qre_sens_parts = new Array();  // sensitive words
+  for (var i = 0; i < wordsArray.length; i ++) {
+    word = wordsArray[i]  //.toLowerCase();
+    if (word.length > 2 && word[0] == "\"" && word[word.length - 1] == "\"")
+      qre_sens_parts.push('\\b' + normalizeWords(word.slice(1, word.length - 1)) + '\\b');
+    else if (exact)
+      qre_inse_parts.push('\\b' + normalizeWords(word) + '\\b');
     else 
-      qre.push(query[i]);
+      qre_inse_parts.push(normalizeWords(word));
   }
 
-  qre = new RegExp(qre.join("|"), "i");
-  if(debug) console.log(qre);
+  qre_inse = new RegExp(qre_inse_parts.join("|"), "i");
+  qre_sens = new RegExp(qre_sens_parts.join("|"));
+  if(debug) {
+    console.log(qre_inse);
+    console.log(qre_sens);
+  }
 
   curColor = 0
 
   var textproc = function(node) {
-    var match = qre.exec(node.data);
-    if (match) {
-      var val = match[0].toLowerCase();
-      var k = '';
-      var node2 = node.splitText(match.index);
+    function paintPearlFound(val, pos) {      
+      var node2 = node.splitText(pos);
       var node3 = node2.splitText(val.length);
       var span = node.ownerDocument.createElement('FONT');
 
       node.parentNode.replaceChild(span, node2);
-      span.className = 'pearl-hilighted-word'
-      if(!wordsColors[val]){
-        wordsColors[val] = colors[curColor]
-        curColor = (curColor+1)%colors.length
-     }            
-     span.style.color = wordsColors[val][0]; 
-     span.style.background = wordsColors[val][1];
+      span.className = 'pearl-hilighted-word';
+      if (!wordsColors[val]) {
+        wordsColors[val] = colors[curColor];
+        curColor = (curColor + 1) % colors.length;
+      }            
+      span.style.color = wordsColors[val][0]; 
+      span.style.background = wordsColors[val][1];
 
-     span.appendChild(node2);
-     hilightedNodes[hilightedNodes.length] = span;            
-     total++;
-     return span;
-    } else {
-      return node;
+      span.appendChild(node2);
+      hilightedNodes[hilightedNodes.length] = span;            
+      total++;
+      return span;
     }
+    var inse_match = qre_inse.exec(node.data);
+    var sens_match = qre_sens.exec(node.data);
+    if (inse_match && !sens_match || (inse_match && sens_match && inse_match.index <= sens_match.index)) {
+      return paintPearlFound(inse_match[0].toLowerCase(), inse_match.index);
+    }    
+    if (sens_match) {
+      return paintPearlFound(sens_match[0].toLowerCase(), sens_match.index);      
+    }
+    return node;
   };
   walkElements(elm.childNodes[0], 1, textproc);    
 };
@@ -267,9 +282,16 @@ function hilightWords(wordsString) {
   total = 0;
   unhighlite();
 
-  if(wordsArray.length > 0){
-    hiliteElement(document.body,wordsArray);
+  if (wordsArray.length > 0) {
+    hiliteElement(document.body, wordsArray);
     if(debug) console.log("Hilight!!!")
+    for(var f = 0; f < frames.length; f++){
+      try {
+        hiliteElement(frames[f].document.body, wordsArray);
+      } catch(err) {
+        console.log("Chrome bug doesn't allow the suppression of this exception: https://code.google.com/p/chromium/issues/detail?id=17325")
+      }
+    }
   }
   hilightedNodes = hilightedNodes.sort(
     function (nodea,nodeb) {
@@ -279,8 +301,8 @@ function hilightWords(wordsString) {
     })
   currentPos = -1;
 
-  /*if(debug) console.log('Frames ' + window.frames.length)
-  if(window.frames.length > 1){
+  if(debug) console.log('Frames ' + window.frames.length)
+  /*if(window.frames.length > 1){
     for(var f in document){
       if(debug) console.log(f)
     }

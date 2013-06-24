@@ -1,6 +1,6 @@
 {
   "name": "Pearls Extension",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "manifest_version": 2,
   "description": "Always highlight a set of words stored for chosen webpages.",
   "icons": {
