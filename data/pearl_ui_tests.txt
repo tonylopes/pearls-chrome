@@ -1,0 +1,15 @@
+Pearl tests:
+
+1) no pearls, exact toggled
+2) add one sensitive "News", remove
+3) add on insensitive news, remove
+4) mix sensitive and insensitive
+5) try empty string sensitive
+6) try empty string insensitive
+7) try partial new
+8) try partial "new"
+9) on benchmark1000, try "Teste","pagina",O
+Optional
+1) try Teste,De,Pagina,Para,Ver,O,Quant,o,Pearls,Aguenta,Testando,de,novo,vamos,la
+2) try "Teste","De","Pagina","Para","Ver","O","Quant","o","Pearls","Aguenta","Testando","de","novo","vamos","la"
+3) try a mix "Teste","de","pagina","Para","Ver","O","Quant","o","Pearls","Aguenta","Testando","de",novo,vamos

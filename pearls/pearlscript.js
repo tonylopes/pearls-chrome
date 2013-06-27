@@ -15,25 +15,39 @@ var colors = [
   ['white', '#909']]
 
 var wordsColorsStr = '';
+var hilightedNodes = Array();
+var wordsColors = Array()
+var total = 0;
+var currentNode = null;
+var currentPos = -1;
+
+function resetGlobals() {
+  wordsColorsStr = '';
+  hilightedNodes = Array();
+  wordsColors = Array()
+  total = 0;
+  currentNode = null;
+  currentPos = null;  
+}
 
 if (window == top) {
   chrome.extension.onRequest.addListener(function(req, sender, sendResponse) {        
     if (debug) console.log("pearlscript.js listened")
-      if (req.type == "hilight" && req.toggled == true) {
-        exact = req.exact;  
-        sendResponse(hilightWords(req.wordsString));
-      } else if (req.type == "hilight" && req.toggled == false) {
-        sendResponse(unhighlite());
-      } else if (req.type == "nextHilightedNode") {
-        sendResponse(goToNextHilightedNode());
-      } else if (req.type == "prevHilightedNode") {
-        sendResponse(goToPrevHilightedNode());
-      } else if (req.type == "wordsColors") {
-        sendResponse({wordsColors: wordsColorsStr});
-      } else {
-        sendResponse({});
-      }
-    });
+    if (req.type == "hilight" && req.toggled == true) {
+      exact = req.exact;  
+      sendResponse(hilightWords(req.wordsString));
+    } else if (req.type == "hilight" && req.toggled == false) {
+      sendResponse(unhighlite());
+    } else if (req.type == "nextHilightedNode") {
+      sendResponse(goToNextHilightedNode());
+    } else if (req.type == "prevHilightedNode") {
+      sendResponse(goToPrevHilightedNode());
+    } else if (req.type == "wordsColors") {
+      sendResponse({wordsColors: wordsColorsStr});
+    } else {
+      sendResponse({});
+    }
+  });
 }
 
 function normalizeWords(pearlsString) {
@@ -56,10 +70,6 @@ function getWords(pearlsString) {
 /**
 * Highlight a DOM element with a list of keywords.
 */
-hilightedNodes = Array();
-var wordsColors = Array()
-var total = 0;
-
 function hiliteElement(elm, wordsArray) {
   if (!wordsArray || elm.childNodes.length == 0)
     return;
@@ -107,10 +117,14 @@ function hiliteElement(elm, wordsArray) {
     }
     var inse_match = qre_inse.exec(node.data);
     var sens_match = qre_sens.exec(node.data);
-    if (inse_match && !sens_match || (inse_match && sens_match && inse_match.index <= sens_match.index)) {
+    var inse_matched = (inse_match !== null && inse_match[0].length > 0);
+    var sens_matched = (sens_match !== null && sens_match[0].length > 0);
+    
+    if (inse_matched && !sens_matched ||      
+        (inse_matched && sens_matched &&
+         inse_match.index <= sens_match.index)) {      
       return paintPearlFound(inse_match[0].toLowerCase(), inse_match.index);
-    }    
-    if (sens_match) {
+    } else if (sens_matched) {
       return paintPearlFound(sens_match[0].toLowerCase(), sens_match.index);      
     }
     return node;
@@ -188,16 +202,12 @@ function unhighlite(){
       //hilightedNodes[i].className = ""; 
   }
   if (debug) console.log('Unhighlite: ' + hilightedNodes.length)
-    hilightedNodes = new Array()
-  wordsColors = Array();
-  wordsColorsStr = '';
+
+  resetGlobals();
+
   return {total: 0};
 }
 
-
-var currentNode;
-var currentPos;
-var absolutePos;
 
 function nextHilightedNode(){
   var pos = currentPos+1;    
@@ -226,14 +236,14 @@ function absolutePos() {
 
 function findPosXY(obj) {
   var curleft = 0, curtop = 0;
-  if (obj.offsetParent){
+  if (obj && obj.offsetParent){
     while (obj.offsetParent) {
       curleft += obj.offsetLeft
       curtop += obj.offsetTop
       obj = obj.offsetParent;
     }
   }
-  else if (obj.x && obj.y){
+  else if (obj && obj.x && obj.y){
     curleft += obj.x;
     curtop += obj.y;
   }
@@ -244,7 +254,8 @@ function findPosXY(obj) {
 function goToNextHilightedNode(){   
   if(currentNode != undefined){
     currentNode.className = 'pearl-hilighted-word'
-    val = currentNode.childNodes[0].data.toLowerCase()    
+    val = currentNode.childNodes[0].data.toLowerCase()
+    if (debug) console.log(val)
     currentNode.style.color = wordsColors[val][0]; 
     currentNode.style.background = wordsColors[val][1];
   }
@@ -252,8 +263,8 @@ function goToNextHilightedNode(){
   pos = findPosXY(currentNode)
   currentNode.className = 'pearl-current-hilighted-word'
   window.scroll(pos.x,pos.y)
-  if(debug) console.log("Next currentNode: " + currentPos + " AbsPos " + absolutePos() + " Pos (" + pos.x + "," + pos.y + ")")
-    return absolutePos();
+  if (debug) console.log("Next currentNode: " + currentPos + " AbsPos " + absolutePos() + " Pos (" + pos.x + "," + pos.y + ")")
+  return absolutePos();
 }
 
 function goToPrevHilightedNode(){  
@@ -268,7 +279,7 @@ function goToPrevHilightedNode(){
   currentNode.className = 'pearl-current-hilighted-word'
   window.scroll(pos.x,pos.y)
   if(debug) console.log("Prev currentNode: " + currentPos + " AbsPos " + absolutePos() + " Pos (" + pos.x + "," + pos.y + ")")
-    return absolutePos();
+  return absolutePos();
 }
 
 var lastText = "";
@@ -278,8 +289,7 @@ function hilightWords(wordsString) {
   var node = document.body;
   var done = false;
   var wordsArray = getWords(wordsString);
-  wordsColors = Array();
-  total = 0;
+  
   unhighlite();
 
   if (wordsArray.length > 0) {
@@ -293,15 +303,15 @@ function hilightWords(wordsString) {
       }
     }
   }
+  // Ordering highlighted nodes from left to right, top to bottom.
   hilightedNodes = hilightedNodes.sort(
     function (nodea,nodeb) {
       posnodea = findPosXY(nodea);
       posnodeb = findPosXY(nodeb);
       return posnodea.y == posnodeb.y ? posnodea.x - posnodeb.x : posnodea.y - posnodeb.y;
     })
-  currentPos = -1;
 
-  if(debug) console.log('Frames ' + window.frames.length)
+  if (debug) console.log('Frames ' + window.frames.length)
   /*if(window.frames.length > 1){
     for(var f in document){
       if(debug) console.log(f)
@@ -317,8 +327,7 @@ function hilightWords(wordsString) {
     return nodea.scrollTop - nodeb.scrollTop; })
   currentNode = null;
   currentNode = nextNode();
-  positionScroll(currentNode);*/  
-  wordsColorsStr = ''
+  positionScroll(currentNode);*/    
   for(var val in wordsColors)
     wordsColorsStr += val +',' + wordsColors[val][0] + ',' + wordsColors[val][1] + ',';       
   
