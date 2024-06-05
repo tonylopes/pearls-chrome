@@ -40,7 +40,7 @@ function getPearls(pearlType){
 
 function getAllPearls(){
   if(debug) console.log("Getting all pearls")
-    localPearls = getPearls("localpearls")
+  localPearls = getPearls("localpearls")
   domainPearls = getPearls("domainpearls")
   globalPearls = getPearls("globalpearls")
   if(debug) console.log("All pearls caught")
@@ -69,4 +69,14 @@ function saveExact(value){
 function loadExact(){    
   value = loadValue('exact');    
   return value == "false" ? false : true;  
+}
+
+// A function that gathers all saved values and returns them as json text
+function getAllValuesJSON(){
+  var values = {};
+  for (var i = 0; i < localStorage.length; i++) {
+    var key = localStorage.key(i);
+    values[key] = localStorage.getItem(key);
+  }
+  return JSON.stringify(values);
 }

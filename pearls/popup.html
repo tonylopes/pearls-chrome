@@ -32,6 +32,11 @@ textarea {
   margin-bottom: 5px;
 }
 
+warning {
+  color: red;
+  font-weight: bold;
+}
+
 textarea:hover {
   background-color: #EEE;  
 }
@@ -55,29 +60,41 @@ input:hover, input:focus {
 .partial {
   background-color: #C9F;
 }
+#backupBtn {
+  font-weight: bold;
+  color: yellow;
+  background-color: red;
+}
 </style>
 </head>
 <body>
-  <div style="display:block; width: 600px; float: right; padding-top: 4px;">    
-    <span style="width: 370px; vertical-align:middle; height: 10px; float: left">    
+  <div style="display:block; width: 600px; height: 20px; float: right; padding-top: 4px;">    
+    <span style="width: 400px; vertical-align:middle; height: 20px; float: left">    
       <input tabindex=5 style="width: 80px" id="configBtn" type="button" value="Pearls" />
       <!--onclick="javascript:hideUnhideConfig()" /> -->
       <input tabindex=4 style="width: 80px" id="movePrevBtn" type="button" value="Previous" />
       <!--onclick="javascript:myMovePage('prevHilightedNode')" /> -->
       <input tabindex=3 style="width: 80px" id="moveNextBtn" type="button" value="Next" />  
       <!--onclick="javascript:myMovePage('nextHilightedNode')" />    -->
-      <input tabindex=8 style="width: 20px" id="pos" type="text" value="0" />    
+      <input tabindex=9 style="width: 20px" id="pos" type="text" value="0" />    
       <span  id="loaded" style="opacity: 0; width: 50px; vertical-align:middle; height: 10px; background-color: red; color: white; font-weight: bold; ">
         Pearls Saved
       </span>
     </span>  
-    <span style="width: 200px; vertical-align:middle; height: 10px; float: right">
+    <span style="width: 200px; vertical-align:middle; height: 20px; float: right">
       <input tabindex=6 style="width: 80px" id="exactBtn" type="button" />
       <!--onclick="javascript:turnExactPartial()" />-->
       <input tabindex=7 style="width: 80px" id="toggleBtn" type="button" />
       <!--onclick="javascript:turnOnOff()" />-->
     </span>
   </div>
+  <div id="warning"  style="display:block; width: 600px; height: 20px; float: right; padding-top: 4px;">
+      <span style="width: 420px; vertical-align:middle; height: 20px; text-align: center; float: center; font-size: 11px; font-weight: bold;">
+      An upcoming chrome update might break the extension. For safety: 
+      </span>
+      <input tabindex=8 style="width: 170px" id="backupBtn" type="button"  value="Click to Save your Backup"  />
+      <!--onclick="javascript:backupClick()" />-->
+    </div>
   <div id="wordsConfig" style="display:block; width: 600px; float: right; padding-top: 10px; ">
     <span style="width: 120px; vertical-align:middle; height: 50px; float: left">
       This page pearls: 

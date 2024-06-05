@@ -82,6 +82,25 @@ function turnOnOff() {
   setFoundPearls();
 }
 
+function backupPearls() {
+  allValuesJSON = getAllValuesJSON()
+  // Ask user to save the file with the JSON content
+  var blob = new Blob([allValuesJSON], {type: "text/plain;charset=utf-8"});
+  // Set the file name as pearls-<date>.json with Today's date and time
+  var fileName = "pearls-" + new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '') + ".json";
+  saveAs(blob, fileName);
+}
+
+function saveAs(blobData, filename) {
+  var downloadLink = document.createElement('a');
+  downloadLink.href = URL.createObjectURL(blobData);
+  downloadLink.download = filename;
+  downloadLink.style.display = 'none';
+  document.body.appendChild(downloadLink);
+  downloadLink.click();
+  document.body.removeChild(downloadLink);
+}
+
 function setExact() { 
   exactInput = getid("exactBtn")
   exact = loadExact();  
@@ -188,6 +207,7 @@ function registerHandlers() {
     function(){myMovePage("nextHilightedNode")});
   getid("exactBtn").addEventListener("click",turnExactPartial);
   getid("toggleBtn").addEventListener("click",turnOnOff);
+  getid("backupBtn").addEventListener("click",backupPearls);
 
   localpearls = getid("localpearls")
   localpearls.addEventListener("focus", function(){cursorend(localpearls)});
