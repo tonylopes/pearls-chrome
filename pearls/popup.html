@@ -1,9 +1,10 @@
 <!DOCTYPE HTML>
 <html>
 <head>
+  <script type="text/javascript" src="logs.js" ></script>
   <script type="text/javascript" src="pearlstorage.js" ></script>
   <script type="text/javascript" src="pearlupdate.js" ></script>
-  <script type="text/javascript" src="pearldialog.js" ></script>
+  <script type="text/javascript" src="popup.js" ></script>
 <style>
 html {margin:0px; padding:0px;} 
 body { margin:0px; padding:0px; } 
@@ -68,31 +69,35 @@ input:hover, input:focus {
 </style>
 </head>
 <body>
+  <div id=""
   <div style="display:block; width: 600px; height: 20px; float: right; padding-top: 4px;">    
     <span style="width: 400px; vertical-align:middle; height: 20px; float: left">    
-      <input tabindex=5 style="width: 80px" id="configBtn" type="button" value="Pearls" />
+      <input tabindex=4 style="width: 80px" id="configBtn" type="button" value="Pearls" />
       <!--onclick="javascript:hideUnhideConfig()" /> -->
-      <input tabindex=4 style="width: 80px" id="movePrevBtn" type="button" value="Previous" />
+      <input tabindex=5 style="width: 80px" id="movePrevBtn" type="button" value="Previous" />
       <!--onclick="javascript:myMovePage('prevHilightedNode')" /> -->
-      <input tabindex=3 style="width: 80px" id="moveNextBtn" type="button" value="Next" />  
+      <input tabindex=6 style="width: 80px" id="moveNextBtn" type="button" value="Next" />  
       <!--onclick="javascript:myMovePage('nextHilightedNode')" />    -->
-      <input tabindex=9 style="width: 20px" id="pos" type="text" value="0" />    
+      <input tabindex=7 style="width: 20px" id="pos" type="text" value="0" />    
       <span  id="loaded" style="opacity: 0; width: 50px; vertical-align:middle; height: 10px; background-color: red; color: white; font-weight: bold; ">
         Pearls Saved
       </span>
     </span>  
     <span style="width: 200px; vertical-align:middle; height: 20px; float: right">
-      <input tabindex=6 style="width: 80px" id="exactBtn" type="button" />
+      <input tabindex=8 style="width: 80px" id="exactBtn" type="button" />
       <!--onclick="javascript:turnExactPartial()" />-->
-      <input tabindex=7 style="width: 80px" id="toggleBtn" type="button" />
+      <input tabindex=9 style="width: 80px" id="toggleBtn" type="button" />
       <!--onclick="javascript:turnOnOff()" />-->
+      <input tabindex=10 style="width: 80px" id="helpBtn" type="button" />
     </span>
   </div>
   <div id="warning"  style="display:block; width: 600px; height: 20px; float: right; padding-top: 4px;">
-      <span style="width: 420px; vertical-align:middle; height: 20px; text-align: center; float: center; font-size: 11px; font-weight: bold;">
-      An upcoming chrome update might break the extension. For safety: 
+      <span style="width: 320px; vertical-align:middle; height: 20px; text-align: center; float: center; font-size: 11px; font-weight: bold;">
+      For safety: 
       </span>
-      <input tabindex=8 style="width: 170px" id="backupBtn" type="button"  value="Click to Save your Backup"  />
+      <input tabindex=9 style="width: 100px" id="backupBtn" type="button"  value="Backup"  />
+      
+      <input tabindex=10 style="width: 100px" id="restoreBtn" type="button"  value="Restore"  />
       <!--onclick="javascript:backupClick()" />-->
     </div>
   <div id="wordsConfig" style="display:block; width: 600px; float: right; padding-top: 10px; ">
@@ -100,9 +105,9 @@ input:hover, input:focus {
       This page pearls: 
     </span>
     <span style="width: 480px; height: 50px; float: right">
-      <textarea tabindex=1 style="width: 480px; height: 50px;" id="localpearls" type="text">
+      <textarea tabindex=1 style="width: 480px; height: 50px;" id="localpearls" type="text" disabled >
       </textarea>
-       <!--onfocus="javascript:cursorend(this)" onkeydown="javascript:inputkeypressed(event,this)" onchange="javascript:mystorePearls('localpearls')" >-->
+       <!--onfocus="javascript:cursorend(this)" onkeydown="javascript:inputkeypressed(event,this)" onchange="javascript:savePearlsAndUpdateMatches('localpearls')" >-->
     </span>
     <span style="width: 600px; height: 5px; float: right">
     </span>
@@ -110,9 +115,9 @@ input:hover, input:focus {
       This domain pearls: 
     </span>
     <span style="width: 480px; height: 50px; float: right">
-      <textarea tabindex=1 style="width: 480px; height: 50px;" id="domainpearls" type="text" >
+      <textarea tabindex=2 style="width: 480px; height: 50px;" id="domainpearls" type="text" disabled >
       </textarea>
-      <!--onfocus="javascript:cursorend(this)" onkeydown="javascript:inputkeypressed(event,this)" onchange="javascript:mystorePearls('domainpearls')" ></textarea>-->
+      <!--onfocus="javascript:cursorend(this)" onkeydown="javascript:inputkeypressed(event,this)" onchange="javascript:savePearlsAndUpdateMatches('domainpearls')" ></textarea>-->
     </span>
     <span style="width: 600px; height: 5px; float: right">
     </span>
@@ -120,9 +125,9 @@ input:hover, input:focus {
       Every page pearls: 
     </span>
     <span style="width: 480px; height: 50px; float: right">
-      <textarea tabindex=2 style="width: 480px; height: 50px;" id="globalpearls" type="text" >
+      <textarea tabindex=3 style="width: 480px; height: 50px;" id="globalpearls" type="text" disabled >
       </textarea>
-      <!--onfocus="javascript:cursorend(this)" onkeydown="javascript:inputkeypressed(event,this)" onchange="javascript:mystorePearls('globalpearls')" ></textarea>-->
+      <!--onfocus="javascript:cursorend(this)" onkeydown="javascript:inputkeypressed(event,this)" onchange="javascript:savePearlsAndUpdateMatches('globalpearls')" ></textarea>-->
     </span>
     <div id="wordsFound" style="display:none; width: 600px; float: right; padding-top: 10px; ">
       <span style="width: 120px; vertical-align:middle; height: 50px; float: left">

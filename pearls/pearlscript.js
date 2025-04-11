@@ -1,4 +1,5 @@
-debug = false
+
+dlogInfo("pearlscript.js loaded")
 // The background page is asking us to find the words
 var exact = true;
 
@@ -30,32 +31,34 @@ function resetGlobals() {
   currentPos = null;  
 }
 
-if (window == top) {
-  chrome.extension.onRequest.addListener(function(req, sender, sendResponse) {        
-    if (debug) console.log("pearlscript.js listened")
-    if (req.type == "hilight" && req.toggled == true) {
-      exact = req.exact;  
-      sendResponse(hilightWords(req.wordsString));
-    } else if (req.type == "hilight" && req.toggled == false) {
-      sendResponse(unhighlite());
-    } else if (req.type == "nextHilightedNode") {
-      sendResponse(goToNextHilightedNode());
-    } else if (req.type == "prevHilightedNode") {
-      sendResponse(goToPrevHilightedNode());
-    } else if (req.type == "wordsColors") {
-      sendResponse({wordsColors: wordsColorsStr});
-    } else {
-      sendResponse({});
-    }
-  });
-}
+chrome.runtime.onMessage.addListener(function(req, sender, sendResponse) {        
+  dlogInfo("pearlscript.js listened", req);
+  if (window != top) {
+    dlogInfo("pearlscript not top window");
+    return;
+  }
+  if (req.type == "hilight" && req.toggled == true) {
+    exact = req.exact;  
+    sendResponse(hilightWords(req.wordsString));
+  } else if (req.type == "hilight" && req.toggled == false) {
+    sendResponse(unhighlite());
+  } else if (req.type == "nextHilightedNode") {
+    sendResponse(goToNextHilightedNode());
+  } else if (req.type == "prevHilightedNode") {
+    sendResponse(goToPrevHilightedNode());
+  } else if (req.type == "wordsColors") {
+    sendResponse({wordsColors: wordsColorsStr});
+  } else {
+    sendResponse({});
+  }
+});
 
 function normalizeWords(pearlsString) {
   return (pearlsString+'').replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1")
 }
 
 function getWords(pearlsString) {
-  if (debug) console.log(" Pearl String INI: " + pearlsString);
+  dlogInfo(" Pearl String INI: " + pearlsString);
   pearls = pearlsString.length > 0 ? pearlsString.split(",") : new Array();
   new_pearls = new Array();
   for (i=0; i < pearls.length; i++){
@@ -63,7 +66,7 @@ function getWords(pearlsString) {
     if (one_pearl != "")
       new_pearls[new_pearls.length] = one_pearl;
   }
-  if (debug) console.log(" Pearl String END: " + new_pearls);
+  dlogInfo(" Pearl String END: " + new_pearls);
   return new_pearls; 
 }
 
@@ -88,10 +91,10 @@ function hiliteElement(elm, wordsArray) {
 
   qre_inse = new RegExp(qre_inse_parts.join("|"), "i");
   qre_sens = new RegExp(qre_sens_parts.join("|"));
-  if(debug) {
-    console.log(qre_inse);
-    console.log(qre_sens);
-  }
+  
+  dlogInfo("qre_inse", qre_inse);
+  dlogInfo("qre_sens", qre_sens);
+  
 
   curColor = 0
 
@@ -201,7 +204,7 @@ function unhighlite(){
       //node.parentNode.replaceChild(childNode,node)
       //hilightedNodes[i].className = ""; 
   }
-  if (debug) console.log('Unhighlite: ' + hilightedNodes.length)
+  dlogInfo('Unhighlite: ' + hilightedNodes.length)
 
   resetGlobals();
 
@@ -255,7 +258,7 @@ function goToNextHilightedNode(){
   if(currentNode != undefined){
     currentNode.className = 'pearl-hilighted-word'
     val = currentNode.childNodes[0].data.toLowerCase()
-    if (debug) console.log(val)
+    dlogInfo(val)
     currentNode.style.color = wordsColors[val][0]; 
     currentNode.style.background = wordsColors[val][1];
   }
@@ -263,7 +266,7 @@ function goToNextHilightedNode(){
   pos = findPosXY(currentNode)
   currentNode.className = 'pearl-current-hilighted-word'
   window.scroll(pos.x,pos.y)
-  if (debug) console.log("Next currentNode: " + currentPos + " AbsPos " + absolutePos() + " Pos (" + pos.x + "," + pos.y + ")")
+  dlogInfo("Next currentNode: " + currentPos + " AbsPos " + absolutePos() + " Pos (" + pos.x + "," + pos.y + ")")
   return absolutePos();
 }
 
@@ -278,7 +281,7 @@ function goToPrevHilightedNode(){
   pos = findPosXY(currentNode)
   currentNode.className = 'pearl-current-hilighted-word'
   window.scroll(pos.x,pos.y)
-  if(debug) console.log("Prev currentNode: " + currentPos + " AbsPos " + absolutePos() + " Pos (" + pos.x + "," + pos.y + ")")
+  dlogInfo("Prev currentNode: " + currentPos + " AbsPos " + absolutePos() + " Pos (" + pos.x + "," + pos.y + ")")
   return absolutePos();
 }
 
@@ -294,12 +297,12 @@ function hilightWords(wordsString) {
 
   if (wordsArray.length > 0) {
     hiliteElement(document.body, wordsArray);
-    if(debug) console.log("Hilight!!!")
+    dlogInfo("Hilight!!!")
     for(var f = 0; f < frames.length; f++){
       try {
         hiliteElement(frames[f].document.body, wordsArray);
       } catch(err) {
-        console.log("Chrome bug doesn't allow the suppression of this exception: https://code.google.com/p/chromium/issues/detail?id=17325")
+        logError("Chrome bug doesn't allow the suppression of this exception: https://code.google.com/p/chromium/issues/detail?id=17325")
       }
     }
   }
@@ -311,15 +314,15 @@ function hilightWords(wordsString) {
       return posnodea.y == posnodeb.y ? posnodea.x - posnodeb.x : posnodea.y - posnodeb.y;
     })
 
-  if (debug) console.log('Frames ' + window.frames.length)
+  dlogInfo('Frames ' + window.frames.length)
   /*if(window.frames.length > 1){
     for(var f in document){
-      if(debug) console.log(f)
+      dlogInfo(f)
     }
 }*/
   /*    if(window.parent.frames[f].document)
   hiliteElement(window.parent.frames[f].document.body,wordsArray);
-      if(debug) console.log("Frame Undef " + f + "  " + window.frames[f].document );
+      dlogInfo("Frame Undef " + f + "  " + window.frames[f].document );
     }
   }else{*/    
   //}
@@ -335,7 +338,7 @@ function hilightWords(wordsString) {
 }
 
 /*function requestOpenPopup(){
- chrome.extension.sendRequest({ type: "requestOpenPopup" })
+ 	chrome.runtime.sendMessage({ type: "requestOpenPopup" })
 }
 
 window.addEventListener('keydown', function(e) {if ((e.which == 'y' && e.altKey)) {

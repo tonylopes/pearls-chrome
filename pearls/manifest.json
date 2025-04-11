@@ -1,28 +1,42 @@
 {
   "name": "Pearls Extension",
-  "version": "1.0.9.1",
-  "manifest_version": 2,
+  "version": "1.0.9.2",
+  "manifest_version": 3,
   "description": "Always highlight a set of words stored for chosen webpages.",
   "icons": {
     "16": "pearl16.png",
     "48": "pearl48.png",
     "128": "pearl128.png"
   },
-  "browser_action": {
-    "default_icon": "pearl.png",
-    "default_popup": "popup.html"
-  },
   "background": {
-    "scripts": ["pearlstorage.js", "pearlupdate.js", "pearlload.js"]
+    "service_worker": "pearlload.js"
   },
   "content_scripts": [
     {
-      "matches": ["http://*/*", "https://*/*", "file://*"], 
-      "js": ["pearlscript.js"],
-      "css" : ["pearlsstyle.css"]
+      "matches": [
+        "http://*/*",
+        "https://*/*",
+        "file://*"
+      ],
+      "js": [
+        "logs.js",
+        "pearlscript.js"
+      ],
+      "css": [
+        "pearlsstyle.css"
+      ]
     }
   ],
   "permissions": [
-    "tabs"
-  ]
+    "tabs",
+    "offscreen",
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "action": {
+    "default_icon": "pearl.png",
+    "default_popup": "popup.html"
+  },
+  "content_security_policy": {}
 }
