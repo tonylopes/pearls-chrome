@@ -146,6 +146,10 @@ function savePearlsAndUpdateMatches(pearltype) {
   });
 }
 
+function toggleWarningDisplay() {
+  hideUnhide('warning');
+}
+
 function hide(eid) {
   getid(eid).style.display = 'none';
   //getid(eid).style.visibility = 'hidden' 
@@ -273,6 +277,8 @@ function registerHandlers() {
   getid("toggleBtn").addEventListener("click", turnOnOff);
   getid("backupBtn").addEventListener("click", backupPearls);
   getid("restoreBtn").addEventListener("click", restorePearls);
+  getid("helpBtn").addEventListener("click", toggleWarningDisplay);
+  
   
   localpearls = getid("localpearls");
   localpearls.addEventListener("focus", function () { cursorend(localpearls) });

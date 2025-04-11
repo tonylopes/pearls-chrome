@@ -1,4 +1,4 @@
-debug = true
+debug = false
 
 importScripts("logs.js")
 importScripts("pearlstorage.js")

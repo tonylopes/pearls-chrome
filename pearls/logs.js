@@ -1,4 +1,4 @@
-debug = true
+debug = false
 
 function logError(...args) {
     if (typeof self !== 'undefined' && self.importScripts) {

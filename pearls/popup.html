@@ -66,10 +66,15 @@ input:hover, input:focus {
   color: yellow;
   background-color: red;
 }
+#helpBtn {
+  width: 20px;
+  font-weight: bold;
+  border-radius: 50%;
+  margin-left: 5px;
+}
 </style>
 </head>
 <body>
-  <div id=""
   <div style="display:block; width: 600px; height: 20px; float: right; padding-top: 4px;">    
     <span style="width: 400px; vertical-align:middle; height: 20px; float: left">    
       <input tabindex=4 style="width: 80px" id="configBtn" type="button" value="Pearls" />
@@ -88,18 +93,17 @@ input:hover, input:focus {
       <!--onclick="javascript:turnExactPartial()" />-->
       <input tabindex=9 style="width: 80px" id="toggleBtn" type="button" />
       <!--onclick="javascript:turnOnOff()" />-->
-      <input tabindex=10 style="width: 80px" id="helpBtn" type="button" />
+      <input tabindex=10 style="width: 20px" id="helpBtn" type="button" value="?" />
     </span>
   </div>
-  <div id="warning"  style="display:block; width: 600px; height: 20px; float: right; padding-top: 4px;">
-      <span style="width: 320px; vertical-align:middle; height: 20px; text-align: center; float: center; font-size: 11px; font-weight: bold;">
+    <div id="warning" style="display:none; width: 600px; height: 20px; float: right; padding-top: 4px; text-align: right;">
+      <span style="vertical-align:middle; height: 20px; font-size: 11px; font-weight: bold; display: inline-block; margin-right: 10px;">
       For safety: 
       </span>
-      <input tabindex=9 style="width: 100px" id="backupBtn" type="button"  value="Backup"  />
-      
-      <input tabindex=10 style="width: 100px" id="restoreBtn" type="button"  value="Restore"  />
+      <input tabindex=10 style="width: 100px; display: inline-block;" id="restoreBtn" type="button" value="Restore" />
+      <input tabindex=9 style="width: 100px; display: inline-block;" id="backupBtn" type="button" value="Backup" />
       <!--onclick="javascript:backupClick()" />-->
-    </div>
+  </div>
   <div id="wordsConfig" style="display:block; width: 600px; float: right; padding-top: 10px; ">
     <span style="width: 120px; vertical-align:middle; height: 50px; float: left">
       This page pearls: 

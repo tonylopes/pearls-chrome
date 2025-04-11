@@ -1,5 +1,5 @@
 var url;
-debug = true
+debug = false
 
 function setUrl(purl) {
   url = purl;
