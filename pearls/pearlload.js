@@ -7,17 +7,33 @@ importScripts("pearlupdate.js")
 const OFFSCREEN_DOCUMENT_PATH = 'offscreen.html';
 
 async function hasOffscreenDocument() {
-  if ('getContexts' in chrome.runtime) {
-    const contexts = await chrome.runtime.getContexts({
-      contextTypes: ['OFFSCREEN_DOCUMENT'],
-      documentUrls: [OFFSCREEN_DOCUMENT_PATH]
-    });
-    return Boolean(contexts.length);
-  } else {
-    const matchedClients = await clients.matchAll();
-    return await matchedClients.some(client => {
-        client.url.includes(chrome.runtime.id);
-    });
+  try {
+    if ('getContexts' in chrome.runtime) {
+      const contexts = await chrome.runtime.getContexts({
+        contextTypes: ['OFFSCREEN_DOCUMENT'],
+        documentUrls: [chrome.runtime.getURL(OFFSCREEN_DOCUMENT_PATH)]
+      });
+      return Boolean(contexts.length);
+    } else {
+      // Fallback for older Chrome versions
+      return false;
+    }
+  } catch (error) {
+    logError('Error checking for offscreen document: ' + error);
+    return false;
+  }
+}
+
+async function closeOffscreenDoc() {
+  try {
+    if (await hasOffscreenDocument()) {
+      await chrome.offscreen.closeDocument();
+      return true;
+    }
+    return false;
+  } catch (error) {
+    logError('Error closing offscreen document: ' + error);
+    return false;
   }
 }
 
@@ -25,55 +41,99 @@ async function hasOffscreenDocument() {
 // This is a one-time operation.
 let creating = null;
 async function createOffscreenDocToMigrateV3() {
-  // Check all windows controlled by the service worker to see if one
-  // of them is the offscreen document with the given path
-  const offscreenUrl = chrome.runtime.getURL(OFFSCREEN_DOCUMENT_PATH);
-
-  // create offscreen document
-  if (creating) {
-    await creating;
-  } else {
-    creating = chrome.offscreen.createDocument({
-      url: offscreenUrl,
-      reasons: [chrome.offscreen.Reason.LOCAL_STORAGE],
-      justification: 'Migrate from v2 storage to v3.'
-    });
-    await creating;
+  try {
+    // Check if document already exists
+    if (await hasOffscreenDocument()) {
+      return;
+    }
+    
+    // Create offscreen document
+    if (creating) {
+      await creating;
+    } else {
+      creating = chrome.offscreen.createDocument({
+        url: chrome.runtime.getURL(OFFSCREEN_DOCUMENT_PATH),
+        reasons: [chrome.offscreen.Reason.LOCAL_STORAGE],
+        justification: 'Migrate from v2 storage to v3.'
+      });
+      await creating;
+      creating = null;
+    }
+  } catch (error) {
+    logError('Error creating offscreen document: ' + error);
     creating = null;
   }
 }
 
-
-hasOffscreenDocument().then((result) => {
-  if (!result) {
-    createOffscreenDocToMigrateV3().catch((error) => {
-      logError('Error creating offscreen document: ' + error);
-    });
-  }
-});
-
-
-// In the service worker
-chrome.runtime.onMessage.addListener(function(req, sender, sendResponse) {
-  if (debug) self.console.log('message received', req)
-  loadMigratedV3().then((migrated) => {
-    if (req.type == "migrateV3" && req.json_values && !migrated) {
-      migrateV3(req.json_values);
-    }
-  });
-});
-
-chrome.tabs.onUpdated.addListener(function(tabId, change, tab) {
-  if(debug) self.console.log('listening')
-  if (/*change.status === 'complete' && */ loadToggle()) {
-    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-      if (chrome.runtime.lastError) {
-        if (debug) self.console.log('Could not load', chrome.runtime.lastError)
-      } else if (tabs && tabs[0].url) {
-        updatePage(tabs[0]);
+// Check if migration is needed and create offscreen document if so
+loadMigratedV3().then((migrated) => {
+  if (!migrated) {
+    hasOffscreenDocument().then((result) => {
+      if (!result) {
+        createOffscreenDocToMigrateV3().catch((error) => {
+          logError('Error creating offscreen document: ' + error);
+        });
       }
     });
   }
 });
 
+// In the service worker
+chrome.runtime.onMessage.addListener(function(req, sender, sendResponse) {
+  if (debug) self.console.log('message received', req);
+  
+  if (req.type === "migrateV3" && req.json_values) {
+    // Handle migration request
+    loadMigratedV3().then((migrated) => {
+      if (!migrated) {
+        migrateV3(req.json_values).then(success => {
+          if (success) {
+            // Close the offscreen document after successful migration
+            closeOffscreenDoc().catch(err => logError('Error closing offscreen doc:', err));
+          }
+          sendResponse({success: success});
+        }).catch(error => {
+          logError('Migration error:', error);
+          sendResponse({success: false, error: error.message});
+        });
+      } else {
+        sendResponse({success: true, alreadyMigrated: true});
+      }
+    });
+    return true; // Keep the message channel open for async response
+  }
 
+  // Add this handler for manual migration requests
+  if (req.type === "requestManualMigration") {
+    loadMigratedV3().then((migrated) => {
+      if (!migrated) {
+        createOffscreenDocToMigrateV3().then(() => {
+          sendResponse({success: true});
+        }).catch(error => {
+          logError('Error creating offscreen document:', error);
+          sendResponse({success: false, error: error.message});
+        });
+      } else {
+        sendResponse({success: true, alreadyMigrated: true});
+      }
+    });
+    return true; // Keep the message channel open for async response
+  }
+});
+
+// Fix the tab update listener to properly handle promises
+chrome.tabs.onUpdated.addListener(function(tabId, change, tab) {
+  if (change.status === 'complete') {
+    loadToggle().then(toggled => {
+      if (toggled) {
+        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+          if (chrome.runtime.lastError) {
+            if (debug) self.console.log('Could not load', chrome.runtime.lastError);
+          } else if (tabs && tabs[0] && tabs[0].url) {
+            updatePage(tabs[0]).catch(err => logError('Error updating page:', err));
+          }
+        });
+      }
+    }).catch(err => logError('Error loading toggle state:', err));
+  }
+});
