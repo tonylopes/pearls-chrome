@@ -346,3 +346,13 @@ window.addEventListener('keydown', function(e) {if ((e.which == 'y' && e.altKey)
                                 requestOpenPopup();
                         }},false );
 */
+
+if (typeof module !== 'undefined' && module.exports !== undefined) {
+  module.exports.getWords = getWords;
+  module.exports.normalizeWords = normalizeWords;
+  module.exports.hiliteElement = hiliteElement;
+  module.exports.unhighlite = unhighlite;
+  module.exports.hilightedNodes = function() { return hilightedNodes; };
+  module.exports.resetGlobals = resetGlobals;
+  module.exports.setExact = function(val) { exact = val; };
+}

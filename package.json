@@ -1,0 +1,33 @@
+{
+  "name": "pearls-chrome",
+  "version": "1.0.0",
+  "description": "There are many web pages that contain large lists of information that are constantly updated.\r When repeatedly searching for multiple interesting words (which could be a large set), it would\r be useful to save those words and automatically search for them as the web page is updated.\r Pearls provides this functionality and allows you to specify sets of words per page, domain, or for all pages.",
+  "main": "jest.config.js",
+  "directories": {
+    "doc": "doc"
+  },
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tonylopes/pearls-chrome.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tonylopes/pearls-chrome/issues"
+  },
+  "homepage": "https://github.com/tonylopes/pearls-chrome#readme",
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "jest": "^27.5.1",
+    "jest-chrome": "^0.8.0",
+    "jest-environment-jsdom": "^27.5.1",
+    "puppeteer": "^24.39.1"
+  },
+  "dependencies": {
+    "puppeteer-core": "^24.39.1"
+  }
+}

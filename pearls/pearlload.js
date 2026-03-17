@@ -125,14 +125,8 @@ chrome.runtime.onMessage.addListener(function(req, sender, sendResponse) {
 chrome.tabs.onUpdated.addListener(function(tabId, change, tab) {
   if (change.status === 'complete') {
     loadToggle().then(toggled => {
-      if (toggled) {
-        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-          if (chrome.runtime.lastError) {
-            if (debug) self.console.log('Could not load', chrome.runtime.lastError);
-          } else if (tabs && tabs[0] && tabs[0].url) {
-            updatePage(tabs[0]).catch(err => logError('Error updating page:', err));
-          }
-        });
+      if (toggled && tab && tab.url) {
+        updatePage(tab).catch(err => logError('Error updating page:', err));
       }
     }).catch(err => logError('Error loading toggle state:', err));
   }

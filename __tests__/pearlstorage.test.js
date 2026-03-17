@@ -20,12 +20,16 @@ function setup_mocks() {
   const length = jest.fn()
   const getItem = jest.fn()
   const setItem = jest.fn()
-  global.localStorage = {
-    key,
-    length,
-    getItem,
-    setItem
-  }
+  
+  Object.defineProperty(window, 'localStorage', {
+    value: {
+      key,
+      length,
+      getItem,
+      setItem
+    },
+    writable: true
+  });
 }
 
 // Write a test suite for the loadValue function
@@ -166,9 +170,9 @@ describe('getAllValuesJSON', () => {
   // Test case for getting all values from localStorage
   test('should return all values from localStorage as JSON', () => {
     // Mock the localStorage.length to return a specific value 
-    localStorage.length = 1;
-    localStorage.key = jest.fn().mockReturnValue('key');
-    localStorage.getItem = jest.fn().mockReturnValue('value');
+    Object.defineProperty(window.localStorage, 'length', { value: 1, writable: true });
+    window.localStorage.key = jest.fn().mockReturnValue('key');
+    window.localStorage.getItem = jest.fn().mockReturnValue('value');
 
     // Call the getAllValuesJSON function
     expect(pearlstorage.getAllValuesJSON()).toEqual('{"key":"value"}');
@@ -189,7 +193,7 @@ describe('loadAllValuesJSON', () => {
     pearlstorage.loadAllValuesJSON('{"key":"value"}');
 
     // Assert that the saveValue function was called with the expected key and value
-    expect(localStorage.setItem).toHaveBeenCalledWith('key', 'value');
+    expect(window.localStorage.setItem).toHaveBeenCalledWith('key', 'value');
   });
 });
 
