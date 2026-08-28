@@ -6,13 +6,14 @@
   <script type="text/javascript" src="pearlupdate.js" ></script>
   <script type="text/javascript" src="popup.js" ></script>
 <style>
+*, *::before, *::after { box-sizing: border-box; }
 html {margin:0px; padding:0px;} 
 body { margin:0px; padding:0px; } 
 img { margin:0px; padding:0px; border:none;} 
 div { margin:0px; padding:0px; }
 body {
-  /*width:600px;
-  overflow-x:hidden;*/
+  width: 600px;
+  overflow-x: hidden;
   font-family: verdana; 
   font-size: 10px;  
   padding: 0px;
@@ -75,7 +76,7 @@ input:hover, input:focus {
 </style>
 </head>
 <body>
-  <div style="display:block; width: 600px; height: 20px; float: right; padding-top: 4px;">    
+  <div style="display:block; width: 600px; height: 20px; padding-top: 4px;">    
     <span style="width: 400px; vertical-align:middle; height: 20px; float: left">    
       <input tabindex=4 style="width: 80px" id="configBtn" type="button" value="Pearls" />
       <!--onclick="javascript:hideUnhideConfig()" /> -->
@@ -96,7 +97,7 @@ input:hover, input:focus {
       <input tabindex=10 style="width: 20px" id="helpBtn" type="button" value="?" />
     </span>
   </div>
-    <div id="warning" style="display:none; width: 600px; height: 20px; float: right; padding-top: 4px; text-align: right;">
+    <div id="warning" style="display:none; width: 600px; height: 20px; padding-top: 4px; text-align: right;">
       <span style="vertical-align:middle; height: 20px; font-size: 11px; font-weight: bold; display: inline-block; margin-right: 10px;">
       For safety: 
       </span>
@@ -104,7 +105,7 @@ input:hover, input:focus {
       <input tabindex=9 style="width: 100px; display: inline-block;" id="backupBtn" type="button" value="Backup" />
       <!--onclick="javascript:backupClick()" />-->
   </div>
-  <div id="wordsConfig" style="display:block; width: 600px; float: right; padding-top: 10px; ">
+  <div id="wordsConfig" style="display:block; width: 600px; padding-top: 10px; ">
     <span style="width: 120px; vertical-align:middle; height: 50px; float: left">
       This page pearls: 
     </span>
@@ -133,7 +134,7 @@ input:hover, input:focus {
       </textarea>
       <!--onfocus="javascript:cursorend(this)" onkeydown="javascript:inputkeypressed(event,this)" onchange="javascript:savePearlsAndUpdateMatches('globalpearls')" ></textarea>-->
     </span>
-    <div id="wordsFound" style="display:none; width: 600px; float: right; padding-top: 10px; ">
+    <div id="wordsFound" style="display:none; width: 600px; padding-top: 10px; ">
       <span style="width: 120px; vertical-align:middle; height: 50px; float: left">
         Pearls found:
       </span>
@@ -143,4 +144,4 @@ input:hover, input:focus {
     </div>
   </div>
 </body>
-</html>
+</html>

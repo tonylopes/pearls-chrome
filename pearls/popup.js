@@ -87,14 +87,15 @@ function setToggle() {
 
 function turnOnOff() {
   loadToggle().then((toggled) => {
-    saveToggle(!toggled);
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-      var tab = tabs[0];
-      updatePage(tab).then(() => {
-        setToggle();
-        setFoundPearls();
+    saveToggle(!toggled).then(() => {
+      chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+        var tab = tabs[0];
+        updatePage(tab).then(() => {
+          setToggle();
+          setFoundPearls();
+        });
       });
-    })
+    });
   }).catch((error) => {
     logError("Error turnOnOff");
     logError(error);
@@ -115,14 +116,15 @@ function setExact() {
 
 function turnExactPartial() {
   loadExact().then((exact) => {
-    saveExact(!exact);
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-      var tab = tabs[0];
-      updatePage(tab).then(() => {
-        setExact();
-        setFoundPearls();
+    saveExact(!exact).then(() => {
+      chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+        var tab = tabs[0];
+        updatePage(tab).then(() => {
+          setExact();
+          setFoundPearls();
+        });
       });
-    })
+    });
   }).catch((error) => {
     logError("Error turnExactPartial");
     logError(error);
@@ -137,11 +139,12 @@ function savePearlsAndUpdateMatches(pearltype) {
     dlogInfo(tab.url);
     setUrl(tab.url);
     pearlvalue = getid(pearltype).value;
-    savePearls(pearltype, pearlvalue);
-    updatePage(tab).then(() => {
-      getid("loaded").style.opacity = 100;
-      fade("loaded");
-      setFoundPearls();
+    savePearls(pearltype, pearlvalue).then(() => {
+      updatePage(tab).then(() => {
+        getid("loaded").style.opacity = 100;
+        fade("loaded");
+        setFoundPearls();
+      });
     });
   });
 }
