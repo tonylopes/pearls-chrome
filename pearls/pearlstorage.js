@@ -45,10 +45,23 @@ function loadValue(key) {
 }
 
 function getKey(pearlType) {
-  return (pearlType == "localpearls" ? url :
-      (pearlType == "domainpearls" ?
-          url.split(/\/+/g)[0] + "//" + url.split(/\/+/g)[1] :
-          "http?://*/*"))
+  if (pearlType === "globalpearls") {
+    return "http?://*/*";
+  }
+  if (!url || typeof url !== 'string') {
+    return "http?://*/*";
+  }
+  if (pearlType === "localpearls") {
+    return url;
+  }
+  if (pearlType === "domainpearls") {
+    const parts = url.split(/\/+/g);
+    if (parts.length >= 2) {
+      return parts[0] + "//" + parts[1];
+    }
+    return url;
+  }
+  return "http?://*/*";
 }
 
 function loadPearls(pearlType) {
@@ -58,7 +71,7 @@ function loadPearls(pearlType) {
 }
 
 function loadAllPearls() {
-  dlogInfo("Getting all pearls")
+  dlogInfo("Getting all pearls");
   
   const localPearlsPromise = loadPearls("localpearls");
   const domainPearlsPromise = loadPearls("domainpearls");
@@ -66,9 +79,19 @@ function loadAllPearls() {
 
   return Promise.all([localPearlsPromise, domainPearlsPromise, globalPearlsPromise])
     .then(([localPearls, domainPearls, globalPearls]) => {
-      dlogInfo("All pearls caught")
-      localAndDomain = localPearls + (localPearls.length > 0 ? "," : "") + domainPearls;
-      return localAndDomain + (localAndDomain.length > 0 ? "," : "") + globalPearls + "";
+      dlogInfo("All pearls caught");
+      const list = [];
+      [localPearls, domainPearls, globalPearls].forEach(p => {
+        if (!p) return;
+        const arr = Array.isArray(p) ? p : String(p).split(',');
+        arr.forEach(word => {
+          const w = String(word).trim();
+          if (w && !list.includes(w)) {
+            list.push(w);
+          }
+        });
+      });
+      return list.join(',');
     });
 }
 
@@ -172,8 +195,33 @@ function loadAllValuesJSON_local(json){
   chrome.storage.local.set(values);
 }
 
+async function loadPearlsArray(pearlType) {
+  const raw = await loadPearls(pearlType);
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw.map(w => String(w).trim()).filter(Boolean);
+  if (typeof raw === 'string') {
+    return raw.split(',').map(w => w.trim()).filter(Boolean);
+  }
+  return [];
+}
+
+async function savePearlsArray(pearlType, tagsArray) {
+  const arr = Array.isArray(tagsArray) ? tagsArray : [];
+  const value = arr.map(w => String(w).trim()).filter(Boolean).join(',');
+  return await savePearls(pearlType, value);
+}
+
+async function saveTagColors(colorMap) {
+  return await saveValue('tag_colors', colorMap || {});
+}
+
+async function loadTagColors() {
+  const val = await loadValue('tag_colors');
+  return (val && typeof val === 'object') ? val : {};
+}
 
 if (typeof module !== 'undefined' && module.exports !== undefined) {
+  module.exports.setUrl = setUrl;
   module.exports.loadValue = loadValue;
   module.exports.saveValue = saveValue;
   module.exports.migrateV3 = migrateV3;
@@ -181,4 +229,8 @@ if (typeof module !== 'undefined' && module.exports !== undefined) {
   module.exports.getAllValuesJSON = getAllValuesJSON;
   module.exports.getAllValuesJSON_local = getAllValuesJSON_local;
   module.exports.loadAllValuesJSON_local = loadAllValuesJSON_local;
+  module.exports.loadPearlsArray = loadPearlsArray;
+  module.exports.savePearlsArray = savePearlsArray;
+  module.exports.saveTagColors = saveTagColors;
+  module.exports.loadTagColors = loadTagColors;
 }

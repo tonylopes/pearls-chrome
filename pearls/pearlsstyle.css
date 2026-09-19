@@ -1,9 +1,9 @@
-
+/* Content script highlight styling injected into webpage DOMs */
 .pearl-hilighted-word {
-  color:blue;
-} 
+  color: blue;
+}
 
 .pearl-current-hilighted-word {
-  color: white !important;; 
-  background-color: #00FF00 !important;;
-} 
+  color: white !important;
+  background-color: #00FF00 !important;
+}

@@ -17,7 +17,8 @@ var colors = [
 
 var wordsColorsStr = '';
 var hilightedNodes = Array();
-var wordsColors = Array()
+var wordsColors = {};
+var wordCounts = {};
 var total = 0;
 var currentNode = null;
 var currentPos = -1;
@@ -25,7 +26,8 @@ var currentPos = -1;
 function resetGlobals() {
   wordsColorsStr = '';
   hilightedNodes = Array();
-  wordsColors = Array()
+  wordsColors = {};
+  wordCounts = {};
   total = 0;
   currentNode = null;
   currentPos = null;  
@@ -37,34 +39,85 @@ chrome.runtime.onMessage.addListener(function(req, sender, sendResponse) {
     dlogInfo("pearlscript not top window");
     return;
   }
-  if (req.type == "hilight" && req.toggled == true) {
-    exact = req.exact;  
+  const isToggledOff = (req.toggled === false || req.toggled === "false");
+  if (req.type === "hilight" && !isToggledOff) {
+    exact = (req.exact === true || req.exact === "true");  
     sendResponse(hilightWords(req.wordsString));
-  } else if (req.type == "hilight" && req.toggled == false) {
+  } else if (req.type === "hilight" && isToggledOff) {
     sendResponse(unhighlite());
   } else if (req.type == "nextHilightedNode") {
     sendResponse(goToNextHilightedNode());
   } else if (req.type == "prevHilightedNode") {
     sendResponse(goToPrevHilightedNode());
   } else if (req.type == "wordsColors") {
-    sendResponse({wordsColors: wordsColorsStr});
+    sendResponse({ wordsColors: wordsColorsStr, wordCounts: wordCounts });
+  } else if (req.type == "scrollToWord") {
+    sendResponse(scrollToWord(req.word));
   } else {
     sendResponse({});
   }
 });
+
+var wordIndices = {};
+
+function scrollToWord(targetWord) {
+  if (!targetWord || hilightedNodes.length === 0) {
+    return { word: targetWord || "", pos: 0, totalWordMatches: 0, total: hilightedNodes.length };
+  }
+  const wordLower = targetWord.toLowerCase();
+  
+  const matchingNodes = hilightedNodes.filter(node => {
+    return node && node.textContent && node.textContent.toLowerCase() === wordLower;
+  });
+
+  if (matchingNodes.length === 0) {
+    return { word: targetWord, pos: 0, totalWordMatches: 0, total: hilightedNodes.length };
+  }
+
+  const currentIndex = ((wordIndices[wordLower] ?? -1) + 1) % matchingNodes.length;
+  wordIndices[wordLower] = currentIndex;
+
+  const targetNode = matchingNodes[currentIndex];
+
+  if (currentNode && currentNode !== targetNode) {
+    currentNode.className = 'pearl-hilighted-word';
+    var prevVal = currentNode.childNodes[0] ? currentNode.childNodes[0].data.toLowerCase() : '';
+    if (wordsColors[prevVal]) {
+      currentNode.style.color = wordsColors[prevVal][0]; 
+      currentNode.style.background = wordsColors[prevVal][1];
+    }
+  }
+
+  currentNode = targetNode;
+  currentPos = hilightedNodes.indexOf(targetNode);
+  targetNode.className = 'pearl-current-hilighted-word';
+
+  targetNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  return {
+    word: targetWord,
+    pos: currentIndex + 1,
+    totalWordMatches: matchingNodes.length,
+    globalPos: currentPos >= 0 ? currentPos + 1 : 1,
+    total: hilightedNodes.length
+  };
+}
 
 function normalizeWords(pearlsString) {
   return (pearlsString+'').replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1")
 }
 
 function getWords(pearlsString) {
-  dlogInfo(" Pearl String INI: " + pearlsString);
-  pearls = pearlsString.length > 0 ? pearlsString.split(",") : new Array();
-  new_pearls = new Array();
-  for (i=0; i < pearls.length; i++){
-    one_pearl = pearls[i].replace(/^\s+|\s+$/g, "");
-    if (one_pearl != "")
-      new_pearls[new_pearls.length] = one_pearl;
+  if (!pearlsString) return [];
+  const str = String(pearlsString);
+  dlogInfo(" Pearl String INI: " + str);
+  const pearls = str.length > 0 ? str.split(",") : [];
+  const new_pearls = [];
+  for (let i = 0; i < pearls.length; i++) {
+    const one_pearl = pearls[i].replace(/^\s+|\s+$/g, "");
+    if (one_pearl !== "") {
+      new_pearls.push(one_pearl);
+    }
   }
   dlogInfo(" Pearl String END: " + new_pearls);
   return new_pearls; 
@@ -74,20 +127,29 @@ function getWords(pearlsString) {
 * Highlight a DOM element with a list of keywords.
 */
 function hiliteElement(elm, wordsArray) {
-  if (!wordsArray || elm.childNodes.length == 0)
+  if (!wordsArray || wordsArray.length === 0 || elm.childNodes.length === 0)
     return;
 
   var qre_inse_parts = new Array(); // insensitive words
   var qre_sens_parts = new Array();  // sensitive words
   for (var i = 0; i < wordsArray.length; i ++) {
-    word = wordsArray[i]  //.toLowerCase();
-    if (word.length > 2 && word[0] == "\"" && word[word.length - 1] == "\"")
-      qre_sens_parts.push('\\b' + normalizeWords(word.slice(1, word.length - 1)) + '\\b');
-    else if (exact)
-      qre_inse_parts.push('\\b' + normalizeWords(word) + '\\b');
-    else 
+    word = wordsArray[i];  //.toLowerCase();
+    if (word.length > 2 && word[0] == "\"" && word[word.length - 1] == "\"") {
+      var cleanWord = word.slice(1, word.length - 1);
+      var leadSens = /^\w/.test(cleanWord) ? '\\b' : '(?<!\\w)';
+      var trailSens = /\w$/.test(cleanWord) ? '\\b' : '(?!\\w)';
+      qre_sens_parts.push(leadSens + normalizeWords(cleanWord) + trailSens);
+    } else if (exact) {
+      var leadInse = /^\w/.test(word) ? '\\b' : '(?<!\\w)';
+      var trailInse = /\w$/.test(word) ? '\\b' : '(?!\\w)';
+      qre_inse_parts.push(leadInse + normalizeWords(word) + trailInse);
+    } else { 
       qre_inse_parts.push(normalizeWords(word));
+    }
   }
+
+  if (qre_inse_parts.length === 0 && qre_sens_parts.length === 0)
+    return;
 
   qre_inse = new RegExp(qre_inse_parts.join("|"), "i");
   qre_sens = new RegExp(qre_sens_parts.join("|"));
@@ -116,6 +178,7 @@ function hiliteElement(elm, wordsArray) {
       span.appendChild(node2);
       hilightedNodes[hilightedNodes.length] = span;            
       total++;
+      wordCounts[val] = (wordCounts[val] || 0) + 1;
       return span;
     }
     var inse_match = qre_inse.exec(node.data);
@@ -178,37 +241,22 @@ function walkElements(node, depth, textproc) {
   }
 };
 
-function unhighlite(){
-  /*  if(hilightedNodes.length > 0){
-      //hilightedNodes.set('class',''); 
-      hilightedNodes.each(function(el) { 
-  //var tn = document.createTextNode(el.get('text'));     
-   el.getParent().replaceChild(tn,el); 
-  el.getParent().replaceChild(el.childNodes[0],el); 
+function unhighlite() {
+  for (let i = 0; i < hilightedNodes.length; i++) {
+    const node = hilightedNodes[i];
+    if (!node || !node.parentNode) continue;
 
-      }); 
-}*/
-
-  for (i=0; i < hilightedNodes.length; i++){
-    node = hilightedNodes[i];
-    realNode = node.previousSibling
-    otherNode = node.nextSibling
-
-    realNode.data += node.textContent
-    realNode.data += otherNode.data
-
-    realNode.parentNode.removeChild(node)
-    realNode.parentNode.removeChild(otherNode)
-
-      //childNode = node.childNodes[0]
-      //node.parentNode.replaceChild(childNode,node)
-      //hilightedNodes[i].className = ""; 
+    const textNode = node.ownerDocument.createTextNode(node.textContent);
+    node.parentNode.replaceChild(textNode, node);
+    if (textNode.parentNode) {
+      textNode.parentNode.normalize();
+    }
   }
-  dlogInfo('Unhighlite: ' + hilightedNodes.length)
+  dlogInfo('Unhighlite: ' + hilightedNodes.length);
 
   resetGlobals();
 
-  return {total: 0};
+  return { total: 0 };
 }
 
 
@@ -257,31 +305,39 @@ function findPosXY(obj) {
 function goToNextHilightedNode(){   
   if(currentNode != undefined){
     currentNode.className = 'pearl-hilighted-word'
-    val = currentNode.childNodes[0].data.toLowerCase()
+    val = currentNode.childNodes[0] ? currentNode.childNodes[0].data.toLowerCase() : ''
     dlogInfo(val)
-    currentNode.style.color = wordsColors[val][0]; 
-    currentNode.style.background = wordsColors[val][1];
+    if (wordsColors[val]) {
+      currentNode.style.color = wordsColors[val][0]; 
+      currentNode.style.background = wordsColors[val][1];
+    }
   }
   nextHilightedNode();
-  pos = findPosXY(currentNode)
-  currentNode.className = 'pearl-current-hilighted-word'
-  window.scroll(pos.x,pos.y)
-  dlogInfo("Next currentNode: " + currentPos + " AbsPos " + absolutePos() + " Pos (" + pos.x + "," + pos.y + ")")
+  if (currentNode) {
+    pos = findPosXY(currentNode)
+    currentNode.className = 'pearl-current-hilighted-word'
+    window.scroll(pos.x,pos.y)
+    dlogInfo("Next currentNode: " + currentPos + " AbsPos " + absolutePos() + " Pos (" + pos.x + "," + pos.y + ")")
+  }
   return absolutePos();
 }
 
 function goToPrevHilightedNode(){  
   if (currentNode != undefined) {
     currentNode.className = 'pearl-hilighted-word'
-    val = currentNode.childNodes[0].data.toLowerCase()  
-    currentNode.style.color = wordsColors[val][0]; 
-    currentNode.style.background = wordsColors[val][1];
+    val = currentNode.childNodes[0] ? currentNode.childNodes[0].data.toLowerCase() : ''
+    if (wordsColors[val]) {
+      currentNode.style.color = wordsColors[val][0]; 
+      currentNode.style.background = wordsColors[val][1];
+    }
   }
   prevHilightedNode();
-  pos = findPosXY(currentNode)
-  currentNode.className = 'pearl-current-hilighted-word'
-  window.scroll(pos.x,pos.y)
-  dlogInfo("Prev currentNode: " + currentPos + " AbsPos " + absolutePos() + " Pos (" + pos.x + "," + pos.y + ")")
+  if (currentNode) {
+    pos = findPosXY(currentNode)
+    currentNode.className = 'pearl-current-hilighted-word'
+    window.scroll(pos.x,pos.y)
+    dlogInfo("Prev currentNode: " + currentPos + " AbsPos " + absolutePos() + " Pos (" + pos.x + "," + pos.y + ")")
+  }
   return absolutePos();
 }
 

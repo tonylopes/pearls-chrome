@@ -87,7 +87,7 @@ describe('Popup - Toggle Extension State', () => {
       call => call[1] && call[1].type === 'hilight'
     );
     expect(hilightCalls.length).toBeGreaterThan(0);
-    expect(hilightCalls[0][1]).toEqual(
+    expect(hilightCalls[hilightCalls.length - 1][1]).toEqual(
       expect.objectContaining({
         type: 'hilight',
         toggled: true

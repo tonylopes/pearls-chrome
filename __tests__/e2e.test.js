@@ -72,9 +72,18 @@ describe('E2E - Background Script Tab Loading', () => {
         window.hilightWords("apple, banana"); 
     });
 
-    // 4. Verify that the `<font>` tags with the class `pearl-hilighted-word` were injected automatically
+    // 4. Verify that the highlights were injected automatically (via CSS.highlights or DOM class)
     const highlightedElements = await page.evaluate(() => {
-      const fonts = document.querySelectorAll('font.pearl-hilighted-word');
+      if (typeof CSS !== 'undefined' && CSS.highlights && CSS.highlights.size > 0) {
+        const ranges = [];
+        for (const [key, highlight] of CSS.highlights.entries()) {
+          for (const range of highlight) {
+            ranges.push(range.toString().trim());
+          }
+        }
+        return ranges;
+      }
+      const fonts = document.querySelectorAll('.pearl-hilighted-word');
       return Array.from(fonts).map(f => f.textContent.trim());
     });
 
