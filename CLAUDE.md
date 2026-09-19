@@ -64,6 +64,31 @@ Commit directly onto the checked-out default branch.
 Run `npx jest --testPathIgnorePatterns e2e` before committing; it is fast and catches the
 regressions jsdom is able to see.
 
+### Pushing — use the SSH remote
+
+`origin` must be the **SSH** URL. Check with `git remote -v` before pushing:
+
+```
+git@github.com:tonylopes/pearls-chrome.git      # correct
+https://github.com/tonylopes/pearls-chrome.git  # will fail to authenticate
+```
+
+With the HTTPS URL the push fails — either `could not read Username for
+'https://github.com'` where nothing can prompt, or a password rejection that looks like
+wrong credentials but is not. **GitHub removed password authentication for Git operations
+on 13 August 2021**, so an HTTPS remote needs a Personal Access Token in the password
+field; the account password is refused however correct it is.
+
+There is already an ed25519 key on this machine registered with the `tonylopes` account, so
+the fix is to switch protocol rather than to go hunting for a token:
+
+```bash
+git remote set-url origin git@github.com:tonylopes/pearls-chrome.git
+```
+
+`ssh -T git@github.com` confirms the key; it answers `Hi tonylopes!` when it is working.
+This is per-clone configuration, so a fresh clone over HTTPS needs the switch again.
+
 ## Working notes
 
 - **The Jest suite cannot see layout.** jsdom returns `0` for all geometry, so match
